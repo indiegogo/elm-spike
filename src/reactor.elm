@@ -1,8 +1,28 @@
 module Reactor exposing (update, view, init, subscriptions)
 
-import Html exposing (div)
-import Msg exposing (Msg)
+import Html exposing (div, text, a)
+import Html.Attributes exposing (href)
+import Msg exposing (..)
 import Debug as D exposing (log)
+import Route
+import Pages.Home
+
+
+type PageApp
+    = Blank
+    | NotFound
+    | Home Pages.Home.Model
+
+
+type PageState
+    = Loaded PageApp
+    | LoadingFrom PageApp
+
+
+type alias Model =
+    { pageState : PageState
+    }
+
 
 
 --
@@ -10,18 +30,19 @@ import Debug as D exposing (log)
 --
 
 
-init options location =
+init location =
     let
-        a =
-            D.log "options" options
-
         b =
             D.log "location" location
 
         c =
             D.log "function" "init"
     in
-        ( options, Cmd.none )
+        (setRoute
+            (Route.fromLocation location)
+            { pageState = Loaded Blank
+            }
+        )
 
 
 
@@ -30,15 +51,32 @@ init options location =
 --
 
 
-update model msg =
+update msg model =
     let
         a =
             D.log "model" model
 
         b =
             D.log "msg" msg
+
+        c =
+            D.log "update"
     in
-        ( {}, Cmd.none )
+        case msg of
+            SetRoute route ->
+                setRoute route model
+
+
+viewBlank =
+    a [ href "#blank" ] [ text "Blank" ]
+
+
+viewHome =
+    a [ href "#home" ] [ text "Home" ]
+
+
+viewNotFound =
+    a [ href "#aouaoeuaoeuaoeu123" ] [ text "Invalid Page fallthrough" ]
 
 
 
@@ -47,9 +85,51 @@ update model msg =
 --
 
 
+navLinks =
+    [ div []
+        [
+         viewBlank
+        , text " | "
+        , viewHome
+        , text " | "
+        , viewNotFound
+        , text " | "
+        ]
+    ]
+
+
 view model =
-    div [] []
+    let
+        headerBuilder title =
+            div [] (List.append [ text title ] navLinks)
+    in
+        case model.pageState of
+            Loaded page ->
+                case page of
+                    Home model ->
+                        headerBuilder ("You are on the '" ++ model.name ++ "'")
+
+                    Blank ->
+                        headerBuilder ("This is the Page that represents nothing")
+
+                    NotFound ->
+                        headerBuilder ("This is the Not Found html")
+
+            LoadingFrom page ->
+                headerBuilder ("Transition from'" ++ (toString page) ++ "'")
 
 
 subscriptions model =
     Sub.none
+
+
+setRoute maybeRoute model =
+    case maybeRoute of
+        Nothing ->
+            ( { model | pageState = Loaded NotFound }, Cmd.none )
+
+        Just (Route.Home) ->
+            ( { model | pageState = Loaded (Home Pages.Home.init) }, Cmd.none )
+
+        Just (Route.Blank) ->
+            ( { model | pageState = Loaded Blank }, Cmd.none )

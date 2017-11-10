@@ -3,12 +3,19 @@ import Navigation exposing (Location)
 
 type Route
     = Home
-    | Login
-    | Logout
-
-
-
+    | Blank
 
 fromLocation location =
---    if String.isEmpty location.hash then
+    if String.isEmpty location.hash then
         Just Home
+    else
+        case location.hash of
+            "#blank" ->
+                Just Blank
+            "#home"  ->
+                Just Home
+            _  -> Nothing
+
+
+
+
