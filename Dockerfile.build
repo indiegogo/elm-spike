@@ -17,4 +17,3 @@ RUN elm-make  src/Main.elm
 
 RUN tar zcf build.tar.gz index.html
 
-RUN npm install -g elm-test@0.18.0

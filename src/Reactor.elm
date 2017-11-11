@@ -1,7 +1,7 @@
 module Reactor exposing (update, view, init, subscriptions)
 
 import Html exposing (div, text, a)
-import Html.Attributes exposing (href)
+import Html.Attributes exposing (href, style)
 import Msg exposing (..)
 import Debug as D exposing (log)
 import Route
@@ -68,7 +68,7 @@ update msg model =
 
 
 viewBlank =
-    a [ href "#blank" ] [ text "Blank" ]
+    a [ href "#blank" ] [ text "Mu" ]
 
 
 viewHome =
@@ -76,7 +76,7 @@ viewHome =
 
 
 viewNotFound =
-    a [ href "#aouaoeuaoeuaoeu123" ] [ text "Invalid Page fallthrough" ]
+    a [ href "#aouaoeuaoeuaoeu123" ] [ text "NotFoundError" ]
 
 
 
@@ -93,15 +93,16 @@ navLinks =
         , viewHome
         , text " | "
         , viewNotFound
-        , text " | "
-        ]
+       ] 
     ]
 
 
 view model =
     let
         headerBuilder title =
-            div [] (List.append [ text title ] navLinks)
+            div [ style [("display", "flex"), ("position", "absolute"), ("top", "0"), ("bottom", "0"), ("left", "0"), ("right","0") ]] [
+                 div [ style [("font-size", "3em"), ("margin","auto")]] (List.append [ text title ] navLinks)
+                ]
     in
         case model.pageState of
             Loaded page ->
@@ -110,7 +111,7 @@ view model =
                         headerBuilder ("You are on the '" ++ model.name ++ "'")
 
                     BlankApp ->
-                        headerBuilder ("This is the Page that represents nothing")
+                        headerBuilder ("This is the Page that represents non-thing")
 
                     NotFound ->
                         headerBuilder ("This is the Not Found html")
