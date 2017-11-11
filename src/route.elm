@@ -2,19 +2,20 @@ module Route exposing (Route(..), fromLocation)
 import Navigation exposing (Location)
 
 type Route
-    = Home
-    | Blank
+    = HomeRoute
+    | BlankRoute
 
 fromLocation location =
     if String.isEmpty location.hash then
-        Just Home
+        Just HomeRoute
     else
         case location.hash of
             "#blank" ->
-                Just Blank
+                Just BlankRoute
             "#home"  ->
-                Just Home
-            _  -> Nothing
+                Just HomeRoute
+            _  ->
+                Nothing
 
 
 

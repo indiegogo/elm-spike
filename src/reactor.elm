@@ -9,9 +9,9 @@ import Pages.Home
 
 
 type PageApp
-    = Blank
+    = BlankApp
     | NotFound
-    | Home Pages.Home.Model
+    | HomeApp Pages.Home.Model
 
 
 type PageState
@@ -40,7 +40,7 @@ init location =
     in
         (setRoute
             (Route.fromLocation location)
-            { pageState = Loaded Blank
+            { pageState = Loaded BlankApp
             }
         )
 
@@ -106,10 +106,10 @@ view model =
         case model.pageState of
             Loaded page ->
                 case page of
-                    Home model ->
+                    HomeApp model ->
                         headerBuilder ("You are on the '" ++ model.name ++ "'")
 
-                    Blank ->
+                    BlankApp ->
                         headerBuilder ("This is the Page that represents nothing")
 
                     NotFound ->
@@ -128,8 +128,8 @@ setRoute maybeRoute model =
         Nothing ->
             ( { model | pageState = Loaded NotFound }, Cmd.none )
 
-        Just (Route.Home) ->
-            ( { model | pageState = Loaded (Home Pages.Home.init) }, Cmd.none )
+        Just (Route.HomeRoute) ->
+            ( { model | pageState = Loaded (HomeApp Pages.Home.init) }, Cmd.none )
 
-        Just (Route.Blank) ->
-            ( { model | pageState = Loaded Blank }, Cmd.none )
+        Just (Route.BlankRoute) ->
+            ( { model | pageState = Loaded BlankApp }, Cmd.none )

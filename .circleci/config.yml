@@ -1,0 +1,57 @@
+version: 2
+jobs:
+  push:
+   docker:
+    - image: google/cloud-sdk
+   steps:
+    - setup_remote_docker:
+        docker_layer_caching: true
+    - run: echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json
+    - run: gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
+    - run: gcloud config set project ${GOOGLE_PROJECT_ID}
+    - run: gcloud config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+    - run: gcloud container clusters get-credentials ${GOOGLE_CLUSTER_NAME}
+    - run: gcloud docker -- pull gcr.io/$GOOGLE_PROJECT_ID/$CIRCLE_PROJECT_REPONAME/release:$CIRCLE_SHA1
+    - run: gcloud docker -- pull gcr.io/indiegogo-staging/docker-kubectl-deployment
+    - run:
+          name: Rollout Deployment (UPSERT)
+          command: |
+            cat > ./deploy.env <<-EOF
+            DEPLOY_NAME=$CIRCLE_PROJECT_REPONAME
+            BRANCH=$CIRCLE_BRANCH
+            IMAGE=gcr.io/$GOOGLE_PROJECT_ID/$CIRCLE_PROJECT_REPONAME/release:$CIRCLE_SHA1
+            PORT=8000
+            CLOUDSDK_COMPUTE_ZONE=$GOOGLE_COMPUTE_ZONE
+            CLOUDSDK_CONTAINER_CLUSTER=$GOOGLE_CLUSTER_NAME
+            CLOUDSDK_PROJECT_ID=$GOOGLE_PROJECT_ID
+            CLOUDSDK_SERVICE_ACCOUNT_KEY=$GCLOUD_SERVICE_KEY
+            EOF
+            gcloud docker -- run -it --env-file ./deploy.env \
+            gcr.io/indiegogo-staging/docker-kubectl-deployment
+  build:
+   docker:
+    - image: google/cloud-sdk
+   working_directory: /workspace
+   steps:
+    - checkout
+    - setup_remote_docker:
+        docker_layer_caching: true
+    - run: echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json
+    - run: gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
+    - run: gcloud config set project ${GOOGLE_PROJECT_ID}
+    - run: gcloud config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+    - run: gcloud container clusters get-credentials ${GOOGLE_CLUSTER_NAME}
+    - run: gcloud docker -- build -t $CIRCLE_PROJECT_REPONAME/build:$CIRCLE_SHA1 -f Dockerfile.build  .
+    - run: gcloud docker -- create --name $CIRCLE_PROJECT_REPONAME-$CIRCLE_JOB-build $CIRCLE_PROJECT_REPONAME/build:$CIRCLE_SHA1
+    - run: gcloud docker -- cp $CIRCLE_PROJECT_REPONAME-$CIRCLE_JOB-build:/app/build.tar.gz .
+    - run: gcloud docker -- rm -f $CIRCLE_PROJECT_REPONAME-$CIRCLE_JOB-build
+    - run: gcloud docker -- build -t gcr.io/$GOOGLE_PROJECT_ID/$CIRCLE_PROJECT_REPONAME/release:$CIRCLE_SHA1 -f Dockerfile.release .
+    - run: gcloud docker -- push gcr.io/$GOOGLE_PROJECT_ID/$CIRCLE_PROJECT_REPONAME/release:$CIRCLE_SHA1
+workflows:
+  version: 2
+  build-test-and-deploy:
+    jobs:
+     - build
+     - push:
+        requires:
+         - build

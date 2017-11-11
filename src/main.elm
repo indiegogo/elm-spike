@@ -6,10 +6,12 @@ import Route
 import Msg exposing (Msg)
 
 main =
-    Navigation.program (Route.fromLocation >> Msg.SetRoute)
+    Navigation.program
+        (Route.fromLocation
+            >> Msg.SetRoute
+        )
         { init = init
         , view = view
         , update = update
         , subscriptions = subscriptions
         }
- 

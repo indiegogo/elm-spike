@@ -13,10 +13,4 @@ pageName =
 
 init : Model
 init =
-    let
-        modelName   =
-            pageName
-        loadError _ =
-            makeLoadingError (String.concat [ "could not transition to ", pageName ])
-    in
-        Model modelName
+        Model pageName

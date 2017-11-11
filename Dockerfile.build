@@ -1,0 +1,20 @@
+FROM node:8
+
+USER root
+WORKDIR /app
+
+RUN npm install -g yarn
+RUN yarn global add elm elm-test
+
+
+
+COPY elm-package.json elm-package.json
+RUN cat /app/elm-package.json
+RUN elm-package install --yes
+
+COPY src/ src/
+RUN elm-make  src/Main.elm
+
+RUN tar zcf build.tar.gz index.html
+
+RUN npm install -g elm-test@0.18.0
