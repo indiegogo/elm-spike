@@ -6,7 +6,7 @@ jobs:
    steps:
      - setup_remote_docker:
          docker_layer_caching: true
-     - run: echo $DEV_GCR_KEY_JSON | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json
+     - run: echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json
      - run: gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
      - run: gcloud config set project ${GOOGLE_PROJECT_ID}
      - run: gcloud config set compute/zone ${GOOGLE_COMPUTE_ZONE}
@@ -24,7 +24,7 @@ jobs:
             CLOUDSDK_COMPUTE_ZONE=$GOOGLE_COMPUTE_ZONE
             CLOUDSDK_CONTAINER_CLUSTER=$GOOGLE_CLUSTER_NAME
             CLOUDSDK_PROJECT_ID=$GOOGLE_PROJECT_ID
-            CLOUDSDK_SERVICE_ACCOUNT_KEY=$DEV_GCR_KEY_JSON
+            CLOUDSDK_SERVICE_ACCOUNT_KEY=$GCLOUD_SERVICE_KEY
             EOF
             gcloud docker -- run -it --env-file ./deploy.env \
             gcr.io/indiegogo-staging/docker-kubectl-deployment
@@ -36,7 +36,7 @@ jobs:
      - checkout
      - setup_remote_docker:
          docker_layer_caching: true
-     - run: echo $DEV_GCR_KEY_JSON | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json
+     - run: echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json
      - run: gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
      - run: gcloud config set project ${GOOGLE_PROJECT_ID}
      - run: gcloud config set compute/zone ${GOOGLE_COMPUTE_ZONE}
