@@ -108,13 +108,13 @@ view model =
             Loaded page ->
                 case page of
                     HomeApp model ->
-                        headerBuilder ("You are on the '" ++ model.name ++ "'")
+                        headerBuilder ("Welcome! You are on the '" ++ model.name ++ "'")
 
                     BlankApp ->
-                        headerBuilder ("This is the Page that represents non-thing")
+                        headerBuilder ("This is the Page that represents non-thing => mu")
 
                     NotFound ->
-                        headerBuilder ("This is the Not Found html")
+                        headerBuilder ("This is the Not Found html page")
 
             LoadingFrom page ->
                 headerBuilder ("Transition from'" ++ (toString page) ++ "'")
