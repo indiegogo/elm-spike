@@ -56,4 +56,4 @@ workflows:
      - push:
        context: org-global
        requires:
-        - build
+         - build
