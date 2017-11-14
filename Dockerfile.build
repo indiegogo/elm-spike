@@ -6,14 +6,16 @@ WORKDIR /app
 RUN npm install -g yarn
 RUN yarn global add elm elm-test
 
-
-
 COPY elm-package.json elm-package.json
 RUN cat /app/elm-package.json
 RUN elm-package install --yes
 
-COPY src/ src/
-RUN elm-make  src/Main.elm
+# static assets
+COPY assets/ assets/
 
-RUN tar zcf build.tar.gz index.html
+COPY src/ src/
+RUN elm-make  src/Main.elm --output assets/elm.js
+
+COPY index.html ./
+RUN tar zcf build.tar.gz index.html assets/
 

@@ -7,11 +7,7 @@ import Debug as D exposing (log)
 import Route
 import Pages.Home
 import Views.Home as HomeView exposing (view)
-import Material
-import Material.Scheme
-import Material.Color as MColor
-import Material.Layout as Layout
-
+import Bootstrap.Grid as Grid
 
 type PageApp
     = BlankApp
@@ -26,7 +22,6 @@ type PageState
 
 type alias Model =
     { pageState : PageState
-    , mdl : Material.Model
     }
 
 
@@ -47,7 +42,6 @@ init location =
         (setRoute
             (Route.fromLocation location)
             { pageState = Loaded BlankApp
-            , mdl = Material.model
             }
         )
 
@@ -72,9 +66,6 @@ update msg model =
         case msg of
             SetRoute route ->
                 setRoute route model
-
-            Mdl msg_ ->
-                Material.update Mdl msg_ model
 
 
 viewBlank =
@@ -105,33 +96,21 @@ navLinks =
         ]
     ]
 
-
+layout main =
+    Grid.container []
+        [
+         Grid.row []
+             [
+              Grid.col [] [ main ]
+             ]
+        ]
+            
 view model =
     let
         headerBuilder html =
             div [ style [ ( "display", "flex" ), ( "position", "absolute" ), ( "top", "0" ), ( "bottom", "0" ), ( "left", "0" ), ( "right", "0" ) ] ]
                 [ div [ style [ ( "font-size", "3em" ), ( "margin", "auto" ) ] ] (List.append [ html ] navLinks)
                 ]
-
-        layout main =
-            Layout.render
-                Mdl
-                model.mdl
-                [ Layout.fixedHeader
-                , Layout.waterfall True
-                ]
-                { header =
-                    [ h1
-                        [ style [ ( "padding", "2rem" ) ]
-                        ]
-                        [ text "Syntax Sugar"
-                        ]
-                    ]
-                , drawer = []
-                , tabs = ( [], [] )
-                , main = [ main ]
-                } |> Material.Scheme.topWithScheme MColor.Grey MColor.Orange
-               
     in
         case model.pageState of
             Loaded page ->

@@ -6,5 +6,5 @@ docker rm -f build-container
 
 docker build -t elm-release -f Dockerfile.release .
 
-exec docker run -it -p 127.0.0.1:8000:8000 elm-release 
+exec docker run -it -p 127.0.0.1:5001:8000 elm-release 
 
