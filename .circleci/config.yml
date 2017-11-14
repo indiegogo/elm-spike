@@ -53,6 +53,9 @@ workflows:
     jobs:
       - build:
           context: org-global
+          filters:
+            branches:
+              ignore: /^no-deploy-.*/
       - push:
           requires:
             - build

@@ -8,6 +8,7 @@ import Route
 import Pages.Home
 import Views.Home as HomeView exposing (view)
 import Material
+import Material.Options as Options
 import Material.Scheme
 import Material.Color as MColor
 import Material.Layout as Layout
@@ -112,13 +113,19 @@ view model =
             div [ style [ ( "display", "flex" ), ( "position", "absolute" ), ( "top", "0" ), ( "bottom", "0" ), ( "left", "0" ), ( "right", "0" ) ] ]
                 [ div [ style [ ( "font-size", "3em" ), ( "margin", "auto" ) ] ] (List.append [ html ] navLinks)
                 ]
-
+        stylesheet =
+            Options.stylesheet """
+            .mdl-layout__header--transparent {
+              background: url('https://getmdl.io/assets/demos/transparent.jpg') center / cover;
+            }
+            """
         layout main =
             Layout.render
                 Mdl
                 model.mdl
                 [ Layout.fixedHeader
                 , Layout.waterfall True
+                , Layout.transparentHeader
                 ]
                 { header =
                     [ h1
@@ -129,7 +136,7 @@ view model =
                     ]
                 , drawer = []
                 , tabs = ( [], [] )
-                , main = [ main ]
+                , main = [ stylesheet ,main ]
                 } |> Material.Scheme.topWithScheme MColor.Grey MColor.Orange
                
     in
