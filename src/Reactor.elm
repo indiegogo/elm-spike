@@ -1,11 +1,16 @@
 module Reactor exposing (update, view, init, subscriptions)
 
-import Html exposing (div, text, a)
+import Html exposing (div, text, a, h1)
 import Html.Attributes exposing (href, style)
 import Msg exposing (..)
 import Debug as D exposing (log)
 import Route
 import Pages.Home
+import Views.Home as HomeView exposing (view)
+import Material
+import Material.Scheme
+import Material.Color as MColor
+import Material.Layout as Layout
 
 
 type PageApp
@@ -21,6 +26,7 @@ type PageState
 
 type alias Model =
     { pageState : PageState
+    , mdl : Material.Model
     }
 
 
@@ -41,6 +47,7 @@ init location =
         (setRoute
             (Route.fromLocation location)
             { pageState = Loaded BlankApp
+            , mdl = Material.model
             }
         )
 
@@ -66,6 +73,9 @@ update msg model =
             SetRoute route ->
                 setRoute route model
 
+            Mdl msg_ ->
+                Material.update Mdl msg_ model
+
 
 viewBlank =
     a [ href "#blank" ] [ text "Mu" ]
@@ -87,37 +97,56 @@ viewNotFound =
 
 navLinks =
     [ div []
-        [
-         viewBlank
+        [ viewBlank
         , text " | "
         , viewHome
         , text " | "
         , viewNotFound
-       ] 
+        ]
     ]
 
 
 view model =
     let
-        headerBuilder title =
-            div [ style [("display", "flex"), ("position", "absolute"), ("top", "0"), ("bottom", "0"), ("left", "0"), ("right","0") ]] [
-                 div [ style [("font-size", "3em"), ("margin","auto")]] (List.append [ text title ] navLinks)
+        headerBuilder html =
+            div [ style [ ( "display", "flex" ), ( "position", "absolute" ), ( "top", "0" ), ( "bottom", "0" ), ( "left", "0" ), ( "right", "0" ) ] ]
+                [ div [ style [ ( "font-size", "3em" ), ( "margin", "auto" ) ] ] (List.append [ html ] navLinks)
                 ]
+
+        layout main =
+            Layout.render
+                Mdl
+                model.mdl
+                [ Layout.fixedHeader
+                , Layout.waterfall True
+                ]
+                { header =
+                    [ h1
+                        [ style [ ( "padding", "2rem" ) ]
+                        ]
+                        [ text "Syntax Sugar"
+                        ]
+                    ]
+                , drawer = []
+                , tabs = ( [], [] )
+                , main = [ main ]
+                } |> Material.Scheme.topWithScheme MColor.Grey MColor.Orange
+               
     in
         case model.pageState of
             Loaded page ->
                 case page of
                     HomeApp model ->
-                        headerBuilder ("Welcome! You are on the '" ++ model.name ++ "'")
+                        layout (headerBuilder (HomeView.view model))
 
                     BlankApp ->
-                        headerBuilder ("This is the Page that represents non-thing => mu")
+                        headerBuilder (text "This is the Page that represents non-thing => mu")
 
                     NotFound ->
-                        headerBuilder ("This is the Not Found html page")
+                        headerBuilder (text "This is the Not Found html page")
 
             LoadingFrom page ->
-                headerBuilder ("Transition from'" ++ (toString page) ++ "'")
+                headerBuilder (text ("Transition from'" ++ (toString page) ++ "'"))
 
 
 subscriptions model =
