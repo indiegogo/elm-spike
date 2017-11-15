@@ -115,21 +115,16 @@ view model =
                 ]
         stylesheet =
             Options.stylesheet """
-            .mdl-layout__header--transparent {
-              background: url('https://getmdl.io/assets/demos/transparent.jpg') center / cover;
-            }
             """
         layout main =
             Layout.render
                 Mdl
                 model.mdl
                 [ Layout.fixedHeader
-                , Layout.waterfall True
-                , Layout.transparentHeader
                 ]
                 { header =
                     [ h1
-                        [ style [ ( "padding", "2rem" ) ]
+                        [ style [ ( "padding", "2rem" ) , ("color", "#fff")]
                         ]
                         [ text "Syntax Sugar"
                         ]
@@ -137,7 +132,7 @@ view model =
                 , drawer = []
                 , tabs = ( [], [] )
                 , main = [ stylesheet ,main ]
-                } |> Material.Scheme.topWithScheme MColor.Grey MColor.Orange
+                }
                
     in
         case model.pageState of
