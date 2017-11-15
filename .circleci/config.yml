@@ -60,3 +60,7 @@ workflows:
           requires:
             - build
           context: org-global
+          filters:
+            branches:
+              ignore: /^no-deploy-.*/
+
