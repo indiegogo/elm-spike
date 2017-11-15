@@ -1,7 +1,7 @@
 module Reactor exposing (update, view, init, subscriptions)
 
-import Html exposing (div, text, a, h1)
-import Html.Attributes exposing (href, style)
+import Html exposing (div, text, a, h1, img)
+import Html.Attributes exposing (href, style, src, alt)
 import Msg exposing (..)
 import Debug as D exposing (log)
 import Route
@@ -123,11 +123,8 @@ view model =
                 [ Layout.fixedHeader
                 ]
                 { header =
-                    [ h1
-                        [ style [ ( "padding", "2rem" ) , ("color", "#fff")]
-                        ]
-                        [ text "Syntax Sugar"
-                        ]
+                    [
+                     img [ alt "syntax-sugar-logo", src "assets/syntax_sugar.png" ] []
                     ]
                 , drawer = []
                 , tabs = ( [], [] )

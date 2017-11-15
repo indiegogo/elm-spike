@@ -16137,26 +16137,17 @@ var _user$project$Reactor$view = function (model) {
 				header: {
 					ctor: '::',
 					_0: A2(
-						_elm_lang$html$Html$h1,
+						_elm_lang$html$Html$img,
 						{
 							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$style(
-								{
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'padding', _1: '2rem'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'color', _1: '#fff'},
-										_1: {ctor: '[]'}
-									}
-								}),
-							_1: {ctor: '[]'}
+							_0: _elm_lang$html$Html_Attributes$alt('syntax-sugar-logo'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$src('assets/syntax_sugar.png'),
+								_1: {ctor: '[]'}
+							}
 						},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('Syntax Sugar'),
-							_1: {ctor: '[]'}
-						}),
+						{ctor: '[]'}),
 					_1: {ctor: '[]'}
 				},
 				drawer: {ctor: '[]'},
