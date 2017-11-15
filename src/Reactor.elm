@@ -1,13 +1,16 @@
 module Reactor exposing (update, view, init, subscriptions)
 
-import Html exposing (div, text, a, h1)
-import Html.Attributes exposing (href, style)
+import Html exposing (div, text, a, h1, img)
+import Html.Attributes exposing (href, style, src, class, alt, id)
 import Msg exposing (..)
 import Debug as D exposing (log)
 import Route
 import Pages.Home
 import Views.Home as HomeView exposing (view)
 import Bootstrap.Grid as Grid
+import Bootstrap.CDN as CDN
+import Bootstrap.Navbar as Navbar
+
 
 type PageApp
     = BlankApp
@@ -22,6 +25,7 @@ type PageState
 
 type alias Model =
     { pageState : PageState
+    , navBarState : Navbar.State
     }
 
 
@@ -38,11 +42,16 @@ init location =
 
         c =
             D.log "function" "init"
+
+        (navBarState, navBarCmd) = Navbar.initialState NavbarMsg
+        
     in
         (setRoute
             (Route.fromLocation location)
-            { pageState = Loaded BlankApp
-            }
+            ({ pageState = Loaded BlankApp
+              , navBarState = navBarState
+            })
+            navBarCmd
         )
 
 
@@ -63,9 +72,11 @@ update msg model =
         c =
             D.log "update"
     in
-        case msg of
-            SetRoute route ->
-                setRoute route model
+      case msg of
+          SetRoute route ->
+              setRoute route model Cmd.none
+          NavbarMsg state ->
+              ({ model | navBarState = state } ,Cmd.none)
 
 
 viewBlank =
@@ -96,15 +107,36 @@ navLinks =
         ]
     ]
 
-layout main =
+
+navbar navState =
+    Navbar.config NavbarMsg
+      |> Navbar.withAnimation
+      |> Navbar.brand
+          [ href "#" ]
+          [ img
+              [ src "assets/syntax_sugar.png"
+              , class "d-inline-block align-top"
+              , alt "syntax-sugar-logo"
+              ]
+              []
+          ]
+      |> Navbar.items
+          [ 
+            Navbar.itemLink [href "#"] [ text "Customers"]
+          ]
+      |> Navbar.view navState
+
+
+layout model main =
     Grid.container []
         [
-         Grid.row []
-             [
-              Grid.col [] [ main ]
-             ]
+         Grid.row [] [Grid.col [id "mainNav"] [ navbar model.navBarState ] ]
+         , Grid.row []
+            [ Grid.col [] [ main ]
+            ]
         ]
-            
+
+
 view model =
     let
         headerBuilder html =
@@ -112,33 +144,33 @@ view model =
                 [ div [ style [ ( "font-size", "3em" ), ( "margin", "auto" ) ] ] (List.append [ html ] navLinks)
                 ]
     in
-        case model.pageState of
-            Loaded page ->
-                case page of
-                    HomeApp model ->
-                        layout (headerBuilder (HomeView.view model))
+      case model.pageState of
+          Loaded page ->
+              case page of
+                  HomeApp homeModel ->
+                      layout model (headerBuilder (HomeView.view homeModel))
 
-                    BlankApp ->
-                        headerBuilder (text "This is the Page that represents non-thing => mu")
+                  BlankApp ->
+                      headerBuilder (text "This is the Page that represents non-thing => mu")
 
-                    NotFound ->
-                        headerBuilder (text "This is the Not Found html page")
+                  NotFound ->
+                      headerBuilder (text "This is the Not Found html page")
 
-            LoadingFrom page ->
-                headerBuilder (text ("Transition from'" ++ (toString page) ++ "'"))
+          LoadingFrom page ->
+              headerBuilder (text ("Transition from'" ++ (toString page) ++ "'"))
 
 
 subscriptions model =
     Sub.none
 
 
-setRoute maybeRoute model =
-    case maybeRoute of
-        Nothing ->
-            ( { model | pageState = Loaded NotFound }, Cmd.none )
+setRoute maybeRoute model navBarCmd =
+      case maybeRoute of
+          Nothing ->
+              ( { model | pageState = Loaded NotFound }, navBarCmd )
 
-        Just (Route.HomeRoute) ->
-            ( { model | pageState = Loaded (HomeApp Pages.Home.init) }, Cmd.none )
+          Just (Route.HomeRoute) ->
+              ( { model | pageState = Loaded (HomeApp Pages.Home.init) }, navBarCmd )
 
-        Just (Route.BlankRoute) ->
-            ( { model | pageState = Loaded BlankApp }, Cmd.none )
+          Just (Route.BlankRoute) ->
+              ( { model | pageState = Loaded BlankApp }, navBarCmd )
