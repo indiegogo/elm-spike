@@ -1,31 +1,53 @@
-module Reactor exposing (update, view, init, subscriptions)
+module Reactor exposing (update, view, init, subscriptions, location2messages, delta2url)
 
-import Html exposing (div, text, a, h1, img)
-import Html.Attributes exposing (href, style, src, class, alt, id)
-import Msg exposing (..)
+import Html exposing (div, text, a, h1, img, map)
+import Html.Attributes exposing (href, style, src, alt)
 import Debug as D exposing (log)
-import Route
-import Pages.Home
-import Views.Home as HomeView exposing (view)
-import Bootstrap.Grid as Grid
-import Bootstrap.CDN as CDN
-import Bootstrap.Navbar as Navbar
+import Material
+import Material.Options as Options
+import Material.Scheme
+import Material.Color as MColor
+import Material.Typography as Typography
+import Material.Layout as Layout
+import RouteUrl as Routing
+import Navigation
+import Dict
+import Array
+import Empty as EmptyView
+import Customers as CustomersView exposing (Msg)
 
 
-type PageApp
-    = BlankApp
-    | NotFound
-    | HomeApp Pages.Home.Model
-
-
-type PageState
-    = Loaded PageApp
-    | LoadingFrom PageApp
+type Msg
+    = SelectTab Int
+    | CustomersTab CustomersView.Msg
+    | EmptyTab EmptyView.Msg
+    | Mdl (Material.Msg Msg)
 
 
 type alias Model =
-    { pageState : PageState
-    , navBarState : Navbar.State
+    { mdl : Material.Model
+    , customersModel : CustomerModel
+    , ordersModel : EmptyModel
+    , inventoryModel : EmptyModel
+    , selectedTab : Int
+    }
+
+
+type alias CustomerModel =
+    { list : List String
+    }
+
+
+type alias EmptyModel =
+    {}
+
+
+model =
+    { mdl = Material.model
+    , customersModel = CustomerModel [ "joe", "sue", "betty", "wilma", "frank" ]
+    , ordersModel = EmptyModel
+    , inventoryModel = EmptyModel
+    , selectedTab = 0
     }
 
 
@@ -35,23 +57,21 @@ type alias Model =
 --
 
 
-init location =
+init =
     let
-        b =
-            D.log "location" location
-
         c =
             D.log "function" "init"
-
-        (navBarState, navBarCmd) = Navbar.initialState NavbarMsg
-        
     in
-        (setRoute
-            (Route.fromLocation location)
-            ({ pageState = Loaded BlankApp
-              , navBarState = navBarState
-            })
-            navBarCmd
+        ( { model
+            | mdl =
+                Layout.setTabsWidth 1384 model.mdl
+                {- elm gives us no way to measure the actual width of tabs. We
+                   hardwire it. If you add a tab, remember to update this. Find the
+                   new value using:
+                   document.getElementsByClassName("mdl-layout__tab-bar")[0].scrollWidth
+                -}
+          }
+        ,  Layout.sub0 Mdl
         )
 
 
@@ -72,105 +92,114 @@ update msg model =
         c =
             D.log "update"
     in
-      case msg of
-          SetRoute route ->
-              setRoute route model Cmd.none
-          NavbarMsg state ->
-              ({ model | navBarState = state } ,Cmd.none)
+        case msg of
+            Mdl msg_ ->
+                Material.update Mdl msg_ model
+
+            SelectTab idx ->
+                ( { model | selectedTab = idx }, Cmd.none )
+
+            CustomersTab msg ->
+                ( model, Cmd.none )
+
+            EmptyTab msg ->
+                ( model, Cmd.none )
 
 
-viewBlank =
-    a [ href "#blank" ] [ text "Mu" ]
-
-
-viewHome =
-    a [ href "#home" ] [ text "Home" ]
-
-
-viewNotFound =
-    a [ href "#aouaoeuaoeuaoeu123" ] [ text "NotFoundError" ]
-
-
-
---
--- view is invoked by updates to the model
---
-
-
-navLinks =
-    [ div []
-        [ viewBlank
-        , text " | "
-        , viewHome
-        , text " | "
-        , viewNotFound
-        ]
+tabSet =
+    [ ( "Customers", "cust", .customersModel >> CustomersView.view >> Html.map CustomersTab )
+    , ( "Orders", "ord", .ordersModel >> EmptyView.view >> Html.map EmptyTab )
+    , ( "Inventory", "invt", .inventoryModel >> EmptyView.view >> Html.map EmptyTab )
     ]
 
 
-navbar navState =
-    Navbar.config NavbarMsg
-      |> Navbar.withAnimation
-      |> Navbar.brand
-          [ href "#" ]
-          [ img
-              [ src "assets/syntax_sugar.png"
-              , class "d-inline-block align-top"
-              , alt "syntax-sugar-logo"
-              ]
-              []
-          ]
-      |> Navbar.items
-          [ 
-            Navbar.itemLink [href "#"] [ text "Customers"]
-          ]
-      |> Navbar.view navState
+tabViews =
+    List.map (\( _, _, v ) -> v) tabSet |> Array.fromList
 
 
-layout model main =
-    Grid.container []
-        [
-         Grid.row [] [Grid.col [id "mainNav"] [ navbar model.navBarState ] ]
-         , Grid.row []
-            [ Grid.col [] [ main ]
+tabNames =
+    ( tabSet |> List.map (\( x, _, _ ) -> text x), [] )
+
+
+urlTabs =
+    List.indexedMap (\idx ( _, x, _ ) -> ( x, idx )) tabSet |> Dict.fromList
+
+
+tabUrls =
+    List.map (\( _, x, _ ) -> x) tabSet |> Array.fromList
+
+
+e404 _ =
+    div
+        []
+        [ Options.styled Html.h1
+            [ Options.cs "mdl-typography--display-4"
+            , Typography.center
             ]
+            [ text "404" ]
         ]
 
 
 view model =
     let
-        headerBuilder html =
-            div [ style [ ( "display", "flex" ), ( "position", "absolute" ), ( "top", "0" ), ( "bottom", "0" ), ( "left", "0" ), ( "right", "0" ) ] ]
-                [ div [ style [ ( "font-size", "3em" ), ( "margin", "auto" ) ] ] (List.append [ html ] navLinks)
+        currentTab =
+            (Array.get model.selectedTab tabViews |> Maybe.withDefault e404) model
+
+        stylesheet =
+            Options.stylesheet """
+            """
+
+        layout main =
+            Layout.render
+                Mdl
+                model.mdl
+                [ Layout.fixedHeader
+                , Layout.selectedTab model.selectedTab
+                , Layout.onSelectTab SelectTab
                 ]
+                { header =
+                    [ Layout.title [] [ img [ alt "syntax-sugar-logo", src "assets/syntax_sugar.png" ] [] ]
+                    ]
+                , drawer = []
+                , tabs = tabNames
+                , main = [ stylesheet, main ]
+                }
     in
-      case model.pageState of
-          Loaded page ->
-              case page of
-                  HomeApp homeModel ->
-                      layout model (headerBuilder (HomeView.view homeModel))
-
-                  BlankApp ->
-                      headerBuilder (text "This is the Page that represents non-thing => mu")
-
-                  NotFound ->
-                      headerBuilder (text "This is the Not Found html page")
-
-          LoadingFrom page ->
-              headerBuilder (text ("Transition from'" ++ (toString page) ++ "'"))
+        layout currentTab
 
 
 subscriptions model =
-    Sub.none
+    Sub.batch
+        [
+          Layout.subs Mdl model.mdl
+   --     , Material.subscriptions Mdl model
+        ]
 
 
-setRoute maybeRoute model navBarCmd =
-      case maybeRoute of
-          Nothing ->
-              ( { model | pageState = Loaded NotFound }, navBarCmd )
+urlOf : Model -> String
+urlOf model =
+    "#" ++ (Array.get model.selectedTab tabUrls |> Maybe.withDefault "")
 
-          Just (Route.HomeRoute) ->
-              ( { model | pageState = Loaded (HomeApp Pages.Home.init) }, navBarCmd )
 
-          Just (Route.BlankRoute) ->
-              ( { model | pageState = Loaded BlankApp }, navBarCmd )
+delta2url : Model -> Model -> Maybe Routing.UrlChange
+delta2url model1 model2 =
+    if model1.selectedTab /= model2.selectedTab then
+        { entry = Routing.NewEntry
+        , url = urlOf model2
+        }
+            |> Just
+    else
+        Nothing
+
+
+location2messages : Navigation.Location -> List Msg
+location2messages location =
+    [ case String.dropLeft 1 location.hash of
+        "" ->
+            SelectTab 0
+
+        x ->
+            Dict.get x urlTabs
+                |> Maybe.withDefault -1
+                |> SelectTab
+    ]

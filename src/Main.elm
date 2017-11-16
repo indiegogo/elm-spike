@@ -1,16 +1,14 @@
 module Main exposing (main)
 
-import Reactor exposing (update, view, init, subscriptions)
-import Navigation exposing (Location)
-import Route
-import Msg exposing (Msg)
+import Reactor exposing (update, view, init, subscriptions, delta2url, location2messages)
+import RouteUrl as Routing
 
 main =
-    Navigation.program
-        (Route.fromLocation
-            >> Msg.SetRoute
-        )
-        { init = init
+    Routing.program
+        {
+         delta2url = delta2url
+        , location2messages = location2messages
+        , init = init
         , view = view
         , update = update
         , subscriptions = subscriptions
