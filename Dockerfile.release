@@ -6,4 +6,5 @@ RUN npm install -g serve
 
 ADD build.tar.gz .
 
+WORKDIR /app/public
 ENTRYPOINT ["serve", "-p", "8000", "-s"]

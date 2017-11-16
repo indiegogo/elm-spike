@@ -15,6 +15,5 @@ COPY public/ public/
 COPY src/ src/
 RUN elm-make  src/Main.elm --output public/assets/elm.js
 
-WORKDIR /app/public
-RUN tar zcf build.tar.gz .
+RUN tar zcf build.tar.gz public
 
