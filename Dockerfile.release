@@ -6,4 +6,4 @@ RUN npm install -g serve
 
 ADD build.tar.gz .
 
-ENTRYPOINT ["serve", "-p", "8000"]
+ENTRYPOINT ["serve", "-p", "8000", "-s"]

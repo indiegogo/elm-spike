@@ -10,12 +10,11 @@ COPY elm-package.json elm-package.json
 RUN cat /app/elm-package.json
 RUN elm-package install --yes
 
-# static assets
-COPY assets/ assets/
 
+COPY public/ public/
 COPY src/ src/
-RUN elm-make  src/Main.elm --output assets/elm.js
+RUN elm-make  src/Main.elm --output public/assets/elm.js
 
-COPY index.html ./
-RUN tar zcf build.tar.gz index.html assets/
+WORKDIR /app/public
+RUN tar zcf build.tar.gz .
 
