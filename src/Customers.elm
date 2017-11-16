@@ -1,18 +1,15 @@
-module Views.Home exposing (view)
+module Customers exposing (view, Msg)
 
-import Pages.Home as HomePage exposing (Model)
-import Html.Attributes
 import Html exposing (Html, text, div)
+
 import Material
-import Material.Scheme
 import Material.Card as Card
 import Material.Options as Options exposing (cs, css)
 import Material.Color as Color
 import Material.Typography as Typography
 
-type alias Mdl =
-    Material.Model
-
+type Msg =
+    Mdl (Material.Msg Msg)
 
 white : Options.Property c m
 white =
@@ -42,16 +39,14 @@ anMdlCard =
         ]
 
 
-view : HomePage.Model -> Html msg
 view model =
     div []
-        [ text
-            ("Views.Home says : Welcome! You are on the '"
-                ++ model.name
-                ++ "'"
-            )
-        , anMdlCard
+        [
+         anMdlCard
         , anMdlCard
         , anMdlCard
         , anMdlCard
         ]
+
+update msg model =
+    (model, Cmd.none)
