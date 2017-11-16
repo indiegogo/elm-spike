@@ -71,7 +71,7 @@ init =
                    document.getElementsByClassName("mdl-layout__tab-bar")[0].scrollWidth
                 -}
           }
-        ,  Layout.sub0 Mdl
+        , Layout.sub0 Mdl
         )
 
 
@@ -149,6 +149,9 @@ view model =
             Options.stylesheet """
             """
 
+        tabLinks =
+            List.map (\( name, href, _ ) -> Layout.link [ Layout.href href ] [ text name ]) tabSet
+
         layout main =
             Layout.render
                 Mdl
@@ -158,10 +161,27 @@ view model =
                 , Layout.onSelectTab SelectTab
                 ]
                 { header =
-                    [ Layout.title [] [ img [ alt "syntax-sugar-logo", src "assets/syntax_sugar.png" ] [] ]
+                    [ Layout.row []
+                        [ Layout.spacer
+                        ]
+                    , Layout.row [ Options.css "align-items" "flex-start" ]
+                        [ Layout.title [] [ img [ alt "syntax-sugar-logo", src "assets/syntax_sugar.png" ] [] ]
+                        , Layout.spacer
+                        , div [] [ text "Welcome / user banner" ]
+                        ]
+                    , Layout.row
+                        [ Options.css "align-items" "flex-end"
+                        ]
+                        [ div []
+                            [ text "Tasty Code Cakes Banner"
+                            ]
+                        ]
+                    , Layout.row []
+                        [ Layout.navigation [] tabLinks
+                        ]
                     ]
                 , drawer = []
-                , tabs = tabNames
+                , tabs = ( [], [] )
                 , main = [ stylesheet, main ]
                 }
     in
@@ -170,15 +190,14 @@ view model =
 
 subscriptions model =
     Sub.batch
-        [
-          Layout.subs Mdl model.mdl
-   --     , Material.subscriptions Mdl model
+        [ Layout.subs Mdl model.mdl
+          --     , Material.subscriptions Mdl model
         ]
 
 
 urlOf : Model -> String
 urlOf model =
-    "#" ++ (Array.get model.selectedTab tabUrls |> Maybe.withDefault "")
+    (Array.get model.selectedTab tabUrls |> Maybe.withDefault "")
 
 
 delta2url : Model -> Model -> Maybe Routing.UrlChange
@@ -194,12 +213,16 @@ delta2url model1 model2 =
 
 location2messages : Navigation.Location -> List Msg
 location2messages location =
-    [ case String.dropLeft 1 location.hash of
-        "" ->
-            SelectTab 0
+    let
+        a =
+            D.log "location2messages -> location" location
+    in
+        [ case String.dropLeft 1 location.pathname of
+            "" ->
+                SelectTab 0
 
-        x ->
-            Dict.get x urlTabs
-                |> Maybe.withDefault -1
-                |> SelectTab
-    ]
+            x ->
+                Dict.get x urlTabs
+                    |> Maybe.withDefault -1
+                    |> SelectTab
+        ]
