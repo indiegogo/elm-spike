@@ -5,8 +5,6 @@ import Html.Attributes exposing (href, style, src, alt)
 import Debug as D exposing (log)
 import Material
 import Material.Options as Options
-import Material.Scheme
-import Material.Color as MColor
 import Material.Typography as Typography
 import Material.Layout as Layout
 import RouteUrl as Routing
@@ -15,7 +13,11 @@ import Dict
 import Array
 import Empty as EmptyView
 import Customers as CustomersView exposing (Msg)
-
+import Ribbon exposing (defaultConfig)
+import Css
+import Css.Colors
+import Html.Styled as St
+import Html.Styled.Attributes as Sa exposing (css)
 
 type Msg
     = SelectTab Int
@@ -152,29 +154,40 @@ view model =
         tabLinks =
             List.map (\( name, href, _ ) -> Layout.link [ Layout.href href ] [ text name ]) tabSet
 
+        bannerConfig msg width=
+               ({ defaultConfig | endBgColor = Css.Colors.maroon, skewColor = Css.Colors.gray, messageBorderColor = Css.Colors.silver, mainBgColor = Css.Colors.white, width = width, message = msg })
+
+
+        userRibbon =
+            St.div [Sa.css [Css.marginRight (Css.px -113), Css.width (Css.px 300) ] ] [
+               (St.fromUnstyled (Ribbon.ribbon_left ( bannerConfig "Welcome User Banner" 300)) )
+            ] |> St.toUnstyled
+
+        tastyCodeRibbon =
+            Ribbon.ribbon_right
+                (bannerConfig "Tasty Code Cakes Banner" 500)
+
+
         layout main =
             Layout.render
                 Mdl
                 model.mdl
                 [ Layout.fixedHeader
-                , Layout.selectedTab model.selectedTab
-                , Layout.onSelectTab SelectTab
                 ]
                 { header =
                     [ Layout.row []
                         [ Layout.spacer
                         ]
-                    , Layout.row [ Options.css "align-items" "flex-start" ]
+                    , Layout.row []
                         [ Layout.title [] [ img [ alt "syntax-sugar-logo", src "assets/syntax_sugar.png" ] [] ]
                         , Layout.spacer
-                        , div [] [ text "Welcome / user banner" ]
+                        , userRibbon
                         ]
-                    , Layout.row
-                        [ Options.css "align-items" "flex-end"
-                        ]
-                        [ div []
-                            [ text "Tasty Code Cakes Banner"
-                            ]
+                    , Layout.row [
+                           Options.css "margin-top" "25px", Options.css "margin-left" "-106px"
+                          ]
+                        [
+                         tastyCodeRibbon
                         ]
                     , Layout.row []
                         [ Layout.navigation [] tabLinks
