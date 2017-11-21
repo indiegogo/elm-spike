@@ -135,7 +135,7 @@ view model =
 
 
     in
-        Layout.view2 [currentTab] tabLinks
+        Layout.view2 currentTab tabLinks
 
 
 subscriptions model =
