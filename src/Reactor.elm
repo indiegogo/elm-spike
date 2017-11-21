@@ -9,7 +9,7 @@ import Navigation
 import Dict
 import Array
 import Empty as EmptyView
-import Customers as CustomersView exposing (Msg)
+import Customers as CustomersView
 import Ribbon exposing (defaultConfig)
 import Css
 import Css.Colors
@@ -17,19 +17,9 @@ import Html.Styled as St
 import Html.Styled.Attributes as Sa exposing (css)
 import Layout
 
-type Msg
-    = SelectTab Int
-    | CustomersTab CustomersView.Msg
-    | EmptyTab EmptyView.Msg
+import Msg exposing(Msg(..))
+import SignIn as SignInView
 
-
-type alias Model =
-    {
-     customersModel : CustomerModel
-    , ordersModel : EmptyModel
-    , inventoryModel : EmptyModel
-    , selectedTab : Int
-    }
 
 
 type alias CustomerModel =
@@ -41,12 +31,25 @@ type alias EmptyModel =
     {}
 
 
+type alias AccountModel =
+    { name : String}
+
+
+type alias Model =
+    { customersModel : CustomerModel
+    , ordersModel : EmptyModel
+    , inventoryModel : EmptyModel
+    , selectedTab : Int
+    , accountModel : Maybe AccountModel
+    }
+
+
 model =
-    {
-      customersModel = CustomerModel [ "joe", "sue", "betty", "wilma", "frank" ]
+    { customersModel = CustomerModel [ "joe", "sue", "betty", "wilma", "frank" ]
     , ordersModel = EmptyModel
     , inventoryModel = EmptyModel
     , selectedTab = 0
+    , accountModel = Nothing
     }
 
 
@@ -62,7 +65,7 @@ init =
             D.log "function" "init"
     in
         ( model
-         , Cmd.none
+        , Cmd.none
         )
 
 
@@ -93,6 +96,12 @@ update msg model =
             EmptyTab msg ->
                 ( model, Cmd.none )
 
+            SignInMsg ->
+                ( {model | accountModel = Just ({name ="joe"})} , Cmd.none )
+
+            SignUpMsg ->
+                ( model ,Cmd.none )
+
 
 tabSet =
     [ ( "Customers", "cust", .customersModel >> CustomersView.view >> Html.map CustomersTab )
@@ -119,21 +128,24 @@ tabUrls =
 
 e404 _ =
     div []
-        [
-         Html.h1 [] [ text "404" ]
+        [ Html.h1 [] [ text "404" ]
         ]
 
-
 view model =
+    case model.accountModel of
+        Nothing ->
+            Layout.view2 SignInView.view0 []
+
+        Just account ->
+            viewForAccount model
+
+viewForAccount model =
     let
         currentTab =
             (Array.get model.selectedTab tabViews |> Maybe.withDefault e404) model
 
         tabLinks =
-            List.map (\( name, href_ , _ ) -> Html.a [ href href_ ] [ text name ]) tabSet
-
-
-
+            List.map (\( name, href_, _ ) -> Html.a [ href ( "#" ++ href_) ] [ text name ]) tabSet
     in
         Layout.view2 currentTab tabLinks
 
@@ -144,7 +156,7 @@ subscriptions model =
 
 urlOf : Model -> String
 urlOf model =
-    (Array.get model.selectedTab tabUrls |> Maybe.withDefault "")
+  "#"  ++ (Array.get model.selectedTab tabUrls |> Maybe.withDefault "")
 
 
 delta2url : Model -> Model -> Maybe Routing.UrlChange
@@ -164,7 +176,7 @@ location2messages location =
         a =
             D.log "location2messages -> location" location
     in
-        [ case String.dropLeft 1 location.pathname of
+        [ case String.dropLeft 1 location.hash of
             "" ->
                 SelectTab 0
 

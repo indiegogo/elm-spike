@@ -93,8 +93,21 @@ linkStyle =
 
 
 sLinks links =
+    let
+        leftLinks =
+           (List.map (\l -> div [ linkStyle ] [ l ]) links)
+
+        rightLinks =
+           [
+            i [ linkStyle ,class "material-icons"] [text "add_circle"]
+           , i [ linkStyle, class "material-icons"] [text "settings"]
+           , i [ linkStyle, class "material-icons"] [text "search"]
+           ]
+        navLinks =
+            List.concat [leftLinks, [div [class "mdl-layout-spacer"] [] ], rightLinks]
+    in
     div [ headerRowStyle ]
-        [ nav [ navStyle ] (List.map (\l -> div [ linkStyle ] [ l ]) links)
+        [ nav [ navStyle ] navLinks
         ]
 
 titleStlye =

@@ -20,7 +20,7 @@ margin1 : Options.Property a b
 margin1 = 
     css "margin" "0"
 
-anMdlCard =
+anMdlCard name =
     Card.view
         [ css "width" "256px"
         , css "height" "256px"
@@ -35,7 +35,7 @@ anMdlCard =
             -- Non-gradient scrim
             [ Options.span
                 [ white, Typography.title, Typography.contrast 1.0 ]
-                [ text "Mary Moo" ]
+                [ text name ]
             ]
         ]
 
@@ -49,12 +49,7 @@ contentStyle =
 
 view model =
     div [contentStyle]
-        [
-         anMdlCard
-        , anMdlCard
-        , anMdlCard
-        , anMdlCard
-        ]
+        ( List.map (\(l) ->  anMdlCard l) model.list)
 
 update msg model =
     (model, Cmd.none)
