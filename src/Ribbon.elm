@@ -1,4 +1,4 @@
-module Ribbon exposing (example,ribbon_left,ribbon_right,ribbon_full,defaultConfig)
+module Ribbon exposing (example, ribbon_left, ribbon_right, ribbon_full, defaultConfig)
 
 import Css exposing (..)
 import Css.Colors
@@ -19,16 +19,17 @@ type alias Config =
     , message : String
     }
 
+
 example msg =
     ribbon_full { defaultConfig | message = msg }
 
 
 builder config fragments =
-    (H.div [ SA.css [(ribbon_container config)] ] fragments) |> toUnstyled
+    (H.div [ (ribbon_container config) ] fragments)
 
 
 ribbon_full config =
-    builder config (List.concat [ leftFragment config, mainFragment config, rightFragment config])
+    builder config (List.concat [ leftFragment config, mainFragment config, rightFragment config ])
 
 
 ribbon_left config =
@@ -50,32 +51,32 @@ ribbon_right config =
 
 
 leftFragment config =
-    [ H.div [ SA.css [(ribbon_back_left config)] ] (arrowFragmentLeft config)
-    , H.div [ SA.css [(ribbon_skew_left config)] ] []
+    [ H.div [ (ribbon_back_left config) ] (arrowFragmentLeft config)
+    , H.div [ (ribbon_skew_left config) ] []
     ]
 
 
 rightFragment config =
-    [ H.div [ SA.css [(ribbon_skew_right config)] ] []
-    , H.div [ SA.css [(ribbon_back_right config)] ] (arrowFragmentRight config)
+    [ H.div [ (ribbon_skew_right config) ] []
+    , H.div [ (ribbon_back_right config) ] (arrowFragmentRight config)
     ]
 
 
 arrowFragmentLeft config =
-    [ H.div [ SA.css [(ribbon_arrow_left_top config)] ] []
-    , H.div [ SA.css [(ribbon_arrow_left_bottom config)] ] []
+    [ H.div [ (ribbon_arrow_left_top config) ] []
+    , H.div [ (ribbon_arrow_left_bottom config) ] []
     ]
 
 
 arrowFragmentRight config =
-    [ H.div [ SA.css [(ribbon_arrow_right_top    config)] ] []
-    , H.div [ SA.css [(ribbon_arrow_right_bottom config)] ] []
+    [ H.div [ (ribbon_arrow_right_top config) ] []
+    , H.div [ (ribbon_arrow_right_bottom config) ] []
     ]
 
 
 mainFragment config =
-    [ H.div [ SA.css [(ribbon_middle config)] ]
-        [ H.div [ SA.css [(ribbon_middle_message config)] ]
+    [ H.div [ (ribbon_middle config) ]
+        [ H.div [ (ribbon_middle_message config) ]
             [ H.text config.message
             ]
         ]
@@ -104,18 +105,20 @@ mainFragment config =
 
 
 ribbon_arrow_right_top config =
-    Css.batch
-        [ right (px -29)
-        , top (px 0)
-        , width (px 0)
-        , important (height (px 25))
-        , borderBottom3 (px 25) solid transparent
-        , borderTop3 (px 0) solid transparent
-        , borderLeft3 (px 30) solid config.endBgColor
-        , borderRight (px 0)
-        , position absolute
-        , zIndex (int 2)
-        , boxSizing borderBox
+    SA.css
+        [ Css.batch
+            [ right (px -29)
+            , top (px 0)
+            , width (px 0)
+            , important (height (px 25))
+            , borderBottom3 (px 25) solid transparent
+            , borderTop3 (px 0) solid transparent
+            , borderLeft3 (px 30) solid config.endBgColor
+            , borderRight (px 0)
+            , position absolute
+            , zIndex (int 2)
+            , boxSizing borderBox
+            ]
         ]
 
 
@@ -140,18 +143,20 @@ ribbon_arrow_right_top config =
 
 
 ribbon_arrow_right_bottom config =
-    Css.batch
-        [ right (px -29)
-        , top (px 25)
-        , width (px 0)
-        , borderTop3 (px 25) solid transparent
-        , borderBottom3 (px 0) solid transparent
-        , borderLeft3 (px 30) solid config.endBgColor
-        , borderRight (px 0)
-        , important (height (px 25))
-        , position absolute
-        , zIndex (int 2)
-        , boxSizing borderBox
+    SA.css
+        [ Css.batch
+            [ right (px -29)
+            , top (px 25)
+            , width (px 0)
+            , borderTop3 (px 25) solid transparent
+            , borderBottom3 (px 0) solid transparent
+            , borderLeft3 (px 30) solid config.endBgColor
+            , borderRight (px 0)
+            , important (height (px 25))
+            , position absolute
+            , zIndex (int 2)
+            , boxSizing borderBox
+            ]
         ]
 
 
@@ -170,14 +175,16 @@ ribbon_arrow_right_bottom config =
 
 
 ribbon_back_right config =
-    Css.batch
-        [ right (px 0)
-        , backgroundColor config.endBgColor
-        , position absolute
-        , width (pct 8)
-        , top (px 12)
-        , height (px 50)
-        , boxSizing borderBox
+    SA.css
+        [ Css.batch
+            [ right (px 0)
+            , backgroundColor config.endBgColor
+            , position absolute
+            , width (pct 8)
+            , top (px 12)
+            , height (px 50)
+            , boxSizing borderBox
+            ]
         ]
 
 
@@ -197,16 +204,18 @@ ribbon_back_right config =
 
 
 ribbon_skew_right config =
-    Css.batch
-        [ right (pct 5)
-        , transform (skew2 (deg 0) (deg -20))
-        , backgroundColor config.skewColor
-        , position absolute
-        , width (pct 3)
-        , top (px 6)
-        , zIndex (int 5)
-        , height (px 50)
-        , boxSizing borderBox
+    SA.css
+        [ Css.batch
+            [ right (pct 5)
+            , transform (skew2 (deg 0) (deg -20))
+            , backgroundColor config.skewColor
+            , position absolute
+            , width (pct 3)
+            , top (px 6)
+            , zIndex (int 5)
+            , height (px 50)
+            , boxSizing borderBox
+            ]
         ]
 
 
@@ -226,16 +235,18 @@ ribbon_skew_right config =
 
 
 ribbon_arrow_left_top config =
-    Css.batch
-        [ left (px -29)
-        , top (px 0)
-        , borderTop3 (px 0) solid transparent
-        , borderBottom3 (px 25) solid transparent
-        , borderRight3 (px 30) solid config.endBgColor
-        , important (height (px 25))
-        , position absolute
-        , zIndex (int 2)
-        , boxSizing borderBox
+    SA.css
+        [ Css.batch
+            [ left (px -29)
+            , top (px 0)
+            , borderTop3 (px 0) solid transparent
+            , borderBottom3 (px 25) solid transparent
+            , borderRight3 (px 30) solid config.endBgColor
+            , important (height (px 25))
+            , position absolute
+            , zIndex (int 2)
+            , boxSizing borderBox
+            ]
         ]
 
 
@@ -255,16 +266,18 @@ ribbon_arrow_left_top config =
 
 
 ribbon_arrow_left_bottom config =
-    Css.batch
-        [ left (px -29)
-        , top (px 25)
-        , borderTop3 (px 25) solid transparent
-        , borderBottom3 (px 0) solid transparent
-        , borderRight3 (px 30) solid config.endBgColor
-        , position absolute
-        , zIndex (int 2)
-        , width (px 0)
-        , boxSizing borderBox
+    SA.css
+        [ Css.batch
+            [ left (px -29)
+            , top (px 25)
+            , borderTop3 (px 25) solid transparent
+            , borderBottom3 (px 0) solid transparent
+            , borderRight3 (px 30) solid config.endBgColor
+            , position absolute
+            , zIndex (int 2)
+            , width (px 0)
+            , boxSizing borderBox
+            ]
         ]
 
 
@@ -284,14 +297,16 @@ ribbon_arrow_left_bottom config =
 
 
 ribbon_back_left config =
-    Css.batch
-        [ left (px 0)
-        , backgroundColor config.endBgColor
-        , position absolute
-        , width (pct 8)
-        , top (px 12)
-        , height (px 50)
-        , boxSizing borderBox
+    SA.css
+        [ Css.batch
+            [ left (px 0)
+            , backgroundColor config.endBgColor
+            , position absolute
+            , width (pct 8)
+            , top (px 12)
+            , height (px 50)
+            , boxSizing borderBox
+            ]
         ]
 
 
@@ -311,16 +326,18 @@ ribbon_back_left config =
 
 
 ribbon_skew_left config =
-    Css.batch
-        [ left (pct 5)
-        , transform (skew2 (deg 0) (deg 20))
-        , backgroundColor config.skewColor
-        , position absolute
-        , width (pct 3)
-        , top (px 6)
-        , zIndex (int 5)
-        , height (px 50)
-        , boxSizing borderBox
+    SA.css
+        [ Css.batch
+            [ left (pct 5)
+            , transform (skew2 (deg 0) (deg 20))
+            , backgroundColor config.skewColor
+            , position absolute
+            , width (pct 3)
+            , top (px 6)
+            , zIndex (int 5)
+            , height (px 50)
+            , boxSizing borderBox
+            ]
         ]
 
 
@@ -342,17 +359,19 @@ ribbon_skew_left config =
 
 
 ribbon_middle config =
-    Css.batch
-        [ backgroundColor config.mainBgColor
-        , position relative
-        , width (pct 90)
-        , left (pct 50)
-        , top (pct 0)
-        , padding (px 5)
-        , marginLeft (pct -45)
-        , zIndex (int 10)
-        , height (px 50)
-        , boxSizing borderBox
+    SA.css
+        [ Css.batch
+            [ backgroundColor config.mainBgColor
+            , position relative
+            , width (pct 90)
+            , left (pct 50)
+            , top (pct 0)
+            , padding (px 5)
+            , marginLeft (pct -45)
+            , zIndex (int 10)
+            , height (px 50)
+            , boxSizing borderBox
+            ]
         ]
 
 
@@ -368,12 +387,14 @@ ribbon_middle config =
 
 
 ribbon_middle_message config =
-    Css.batch
-        [ border3 (px 1) dashed config.messageBorderColor
-        , height (px 40)
-        , lineHeight (px 40)
-        , textAlign center
-        , boxSizing borderBox
+    SA.css
+        [ Css.batch
+            [ border3 (px 1) dashed config.messageBorderColor
+            , height (px 40)
+            , lineHeight (px 40)
+            , textAlign center
+            , boxSizing borderBox
+            ]
         ]
 
 
@@ -392,12 +413,14 @@ ribbon_middle_message config =
 
 
 ribbon_container config =
-    Css.batch
-        [ width (pct 80)
-        , maxWidth (px config.width)
-        , height (px 80)
-        , position relative
-        , boxSizing borderBox
+    SA.css
+        [ Css.batch
+            [ width (pct 80)
+            , maxWidth (px config.width)
+            , height (px 80)
+            , position relative
+            , boxSizing borderBox
+            ]
         ]
 
 

@@ -2,11 +2,8 @@ module Reactor exposing (update, view, init, subscriptions, location2messages, d
 
 import Html exposing (div, text, a, h1, img, map)
 import Html.Attributes exposing (href, style, src, alt)
+import Html.Events as E
 import Debug as D exposing (log)
-import Material
-import Material.Options as Options
-import Material.Typography as Typography
-import Material.Layout as Layout
 import RouteUrl as Routing
 import Navigation
 import Dict
@@ -18,17 +15,17 @@ import Css
 import Css.Colors
 import Html.Styled as St
 import Html.Styled.Attributes as Sa exposing (css)
+import Layout
 
 type Msg
     = SelectTab Int
     | CustomersTab CustomersView.Msg
     | EmptyTab EmptyView.Msg
-    | Mdl (Material.Msg Msg)
 
 
 type alias Model =
-    { mdl : Material.Model
-    , customersModel : CustomerModel
+    {
+     customersModel : CustomerModel
     , ordersModel : EmptyModel
     , inventoryModel : EmptyModel
     , selectedTab : Int
@@ -45,8 +42,8 @@ type alias EmptyModel =
 
 
 model =
-    { mdl = Material.model
-    , customersModel = CustomerModel [ "joe", "sue", "betty", "wilma", "frank" ]
+    {
+      customersModel = CustomerModel [ "joe", "sue", "betty", "wilma", "frank" ]
     , ordersModel = EmptyModel
     , inventoryModel = EmptyModel
     , selectedTab = 0
@@ -64,16 +61,8 @@ init =
         c =
             D.log "function" "init"
     in
-        ( { model
-            | mdl =
-                Layout.setTabsWidth 1384 model.mdl
-                {- elm gives us no way to measure the actual width of tabs. We
-                   hardwire it. If you add a tab, remember to update this. Find the
-                   new value using:
-                   document.getElementsByClassName("mdl-layout__tab-bar")[0].scrollWidth
-                -}
-          }
-        , Layout.sub0 Mdl
+        ( model
+         , Cmd.none
         )
 
 
@@ -95,9 +84,6 @@ update msg model =
             D.log "update"
     in
         case msg of
-            Mdl msg_ ->
-                Material.update Mdl msg_ model
-
             SelectTab idx ->
                 ( { model | selectedTab = idx }, Cmd.none )
 
@@ -132,13 +118,9 @@ tabUrls =
 
 
 e404 _ =
-    div
-        []
-        [ Options.styled Html.h1
-            [ Options.cs "mdl-typography--display-4"
-            , Typography.center
-            ]
-            [ text "404" ]
+    div []
+        [
+         Html.h1 [] [ text "404" ]
         ]
 
 
@@ -147,65 +129,17 @@ view model =
         currentTab =
             (Array.get model.selectedTab tabViews |> Maybe.withDefault e404) model
 
-        stylesheet =
-            Options.stylesheet """
-            """
-
         tabLinks =
-            List.map (\( name, href, _ ) -> Layout.link [ Layout.href href ] [ text name ]) tabSet
-
-        bannerConfig msg width=
-               ({ defaultConfig | endBgColor = Css.Colors.maroon, skewColor = Css.Colors.gray, messageBorderColor = Css.Colors.silver, mainBgColor = Css.Colors.white, width = width, message = msg })
+            List.map (\( name, href_ , _ ) -> Html.a [ href href_ ] [ text name ]) tabSet
 
 
-        userRibbon =
-            St.div [Sa.css [Css.marginRight (Css.px -113), Css.width (Css.px 300) ] ] [
-               (St.fromUnstyled (Ribbon.ribbon_left ( bannerConfig "Welcome User Banner" 300)) )
-            ] |> St.toUnstyled
 
-        tastyCodeRibbon =
-            Ribbon.ribbon_right
-                (bannerConfig "Tasty Code Cakes Banner" 500)
-
-
-        layout main =
-            Layout.render
-                Mdl
-                model.mdl
-                [ Layout.fixedHeader
-                ]
-                { header =
-                    [ Layout.row []
-                        [ Layout.spacer
-                        ]
-                    , Layout.row []
-                        [ Layout.title [] [ img [ alt "syntax-sugar-logo", src "assets/syntax_sugar.png" ] [] ]
-                        , Layout.spacer
-                        , userRibbon
-                        ]
-                    , Layout.row [
-                           Options.css "margin-top" "25px", Options.css "margin-left" "-106px"
-                          ]
-                        [
-                         tastyCodeRibbon
-                        ]
-                    , Layout.row []
-                        [ Layout.navigation [] tabLinks
-                        ]
-                    ]
-                , drawer = []
-                , tabs = ( [], [] )
-                , main = [ stylesheet, main ]
-                }
     in
-        layout currentTab
+        Layout.view2 [currentTab] tabLinks
 
 
 subscriptions model =
-    Sub.batch
-        [ Layout.subs Mdl model.mdl
-          --     , Material.subscriptions Mdl model
-        ]
+    Sub.none
 
 
 urlOf : Model -> String
