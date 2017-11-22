@@ -1,24 +1,12 @@
 module Reactor exposing (update, view, init, subscriptions, location2messages, delta2url)
 
-import Html exposing (div, text, a, h1, img, map)
-import Html.Attributes exposing (href, style, src, alt)
-import Html.Events as E
 import Debug as D exposing (log)
 import RouteUrl as Routing
 import Navigation
 import Dict
-import Array
-import Empty as EmptyView
-import Customers as CustomersView
-import Ribbon exposing (defaultConfig)
-import Css
-import Css.Colors
-import Html.Styled as St
-import Html.Styled.Attributes as Sa exposing (css)
-import Layout
-
 import Msg exposing(Msg(..))
-import SignIn as SignInView
+
+import Layout
 
 
 type alias CustomerModel =
