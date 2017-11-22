@@ -1,12 +1,21 @@
 module Layout exposing (..)
 
+import Array
+import Dict
+
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Ribbon exposing (defaultConfig)
 import Css
 import Css.Colors
 import Html.Styled as St
 import Html.Styled.Attributes as Sa
+
+import Empty as EmptyView
+import Customers as CustomersView
+import SignIn as SignInView
+import Msg exposing(Msg(..))
 
 
 bannerConfig msg width =
@@ -26,6 +35,7 @@ userRibbon model =
         Just account ->
             div [ userRibbonStyle]
                 [ Ribbon.ribbon_left (bannerConfig ("Welcome "++ account.name) 500) |> St.toUnstyled
+                 , a [onClick SignOut] [text "Sign Out"]
                 ]
         Nothing ->
             span [] []
@@ -125,9 +135,54 @@ sTitle model =
         , userRibbon model
         ]
 
-
-view body links model =
-    div [ containerStyle ]
-        [ (sHeader links model)
-        ,  body
+e404 _ =
+    div []
+        [ Html.h1 [] [ text "404" ]
         ]
+
+view model =
+    let
+        currentView =
+            (Array.get model.selectedPageIndex tabViews |> Maybe.withDefault e404) model
+    in
+    div [ containerStyle ]
+        [ (sHeader (tabLinks model) model.accountModel)
+        ,  currentView
+        ]
+
+tabSet =
+    [
+     ( 0,"SignIn", "signIn", .accountModel >> SignInView.view >> Html.map SignInPage )
+    , ( 1,"Customers", "cust",.customersModel >> CustomersView.view >> Html.map CustomersPage )
+    , ( 1,"Orders", "ord", .ordersModel >> EmptyView.view >> Html.map EmptyPage )
+    , ( 1,"Inventory", "inv", .inventoryModel >> EmptyView.view >> Html.map EmptyPage )
+    ]
+
+
+
+tabViews =
+    List.map (\(_, _, _, v ) -> v) tabSet |> Array.fromList
+
+tabNames =
+    ( tabSet |> List.map (\(_, x, _, _ ) -> text x), [] )
+
+urlTabs =
+    List.indexedMap (\idx (_, _, u, _ ) -> ( u, idx )) tabSet |> Dict.fromList
+
+
+tabUrls =
+    List.map (\(_,_, u, _ ) -> u) tabSet |> Array.fromList
+
+tabLinks model =
+    case model.accountModel of
+        Nothing ->
+            []
+        Just a ->
+          (List.map
+              (\(_,name,href_, _ ) ->
+                        Html.a [ href ( "#" ++ href_) ] [ text name ])
+              (List.filter (\(i,_,_,_) ->  i == 1 ) tabSet)
+          )
+
+urlOf model =
+  "#"  ++ (Array.get model.selectedPageIndex tabUrls |> Maybe.withDefault "")

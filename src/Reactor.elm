@@ -102,68 +102,25 @@ update msg model =
         EmptyPage msg ->
             ( model, Cmd.none )
 
-tabSet =
-    [
-     ( 0,"SignIn", "signIn", .accountModel >> SignInView.view >> Html.map SignInPage )
-    , ( 1,"Customers", "cust",.customersModel >> CustomersView.view >> Html.map CustomersPage )
-    , ( 1,"Orders", "ord", .ordersModel >> EmptyView.view >> Html.map EmptyPage )
-    , ( 1,"Inventory", "inv", .inventoryModel >> EmptyView.view >> Html.map EmptyPage )
-    ]
+        SignOut ->
+            ({model| accountModel = Nothing,
+                     selectedPageIndex = 0
+             }, Cmd.none)
 
-
-
-tabViews =
-    List.map (\(_, _, _, v ) -> v) tabSet |> Array.fromList
-
-tabNames =
-    ( tabSet |> List.map (\(_, x, _, _ ) -> text x), [] )
-
-urlTabs =
-    List.indexedMap (\idx (_, _, u, _ ) -> ( u, idx )) tabSet |> Dict.fromList
-
-
-tabUrls =
-    List.map (\(_,_, u, _ ) -> u) tabSet |> Array.fromList
-
-
-e404 _ =
-    div []
-        [ Html.h1 [] [ text "404" ]
-        ]
 
 view model =
-    let
-        currentView =
-            (Array.get model.selectedPageIndex tabViews |> Maybe.withDefault e404) model
-
-        tabLinks =
-            case model.accountModel of
-                Nothing ->
-                    []
-                Just a ->
-                  (List.map
-                      (\(_,name,href_, _ ) ->
-                                Html.a [ href ( "#" ++ href_) ] [ text name ])
-                      (List.filter (\(i,_,_,_) ->  i == 1 ) tabSet)
-                  )
-    in
-        Layout.view currentView tabLinks model.accountModel
+    Layout.view model
 
 
 subscriptions model =
     Sub.none
 
 
-urlOf : Model -> String
-urlOf model =
-  "#"  ++ (Array.get model.selectedPageIndex tabUrls |> Maybe.withDefault "")
-
-
 delta2url : Model -> Model -> Maybe Routing.UrlChange
 delta2url model1 model2 =
     if model1.selectedPageIndex /= model2.selectedPageIndex then
         { entry = Routing.NewEntry
-        , url = urlOf model2
+        , url = Layout.urlOf model2
         }
             |> Just
     else
@@ -181,7 +138,7 @@ location2messages location =
                 SelectPage 0
 
             x ->
-                Dict.get x urlTabs
+                Dict.get x Layout.urlTabs
                     |> Maybe.withDefault -1
                     |> SelectPage
         ]
