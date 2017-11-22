@@ -85,28 +85,22 @@ update msg model =
         c =
             D.log "update"
     in
-        case model.accountModel of
-            Nothing ->
-                case msg of
-                  SignInPage msg ->
-                      ( {model | accountModel = Just ({name = "Joe"}),
-                                selectedPageIndex = 1
-                        } , Cmd.none )
-                  _ ->
-                      (model, Cmd.none)
+    case msg of
+        SelectPage idx ->
+            case model.accountModel of
+                Just a -> 
+                    ( { model | selectedPageIndex = idx }, Cmd.none )
+                Nothing ->
+                    (model, Cmd.none)
+        SignInPage msg ->
+            ( {model | accountModel = Just ({name = "Joe"}),
+                   selectedPageIndex = 1
+              } , Cmd.none )
+        CustomersPage msg ->
+            ( model, Cmd.none )
 
-            Just a -> 
-              case msg of
-                  SelectPage idx ->
-                      ( { model | selectedPageIndex = idx }, Cmd.none )
-
-                  CustomersPage msg ->
-                      ( model, Cmd.none )
-
-                  EmptyPage msg ->
-                      ( model, Cmd.none )
-                  _ ->
-                      (model, Cmd.none)
+        EmptyPage msg ->
+            ( model, Cmd.none )
 
 tabSet =
     [
