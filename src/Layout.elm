@@ -20,10 +20,15 @@ userRibbonStyle =
          ("width", "400px")
          ,("margin-right","-120px")
         ]
-userRibbon =
-    div [ userRibbonStyle]
-        [ Ribbon.ribbon_left (bannerConfig "Welcome User Banner" 500) |> St.toUnstyled
-        ]
+
+userRibbon model =
+    case model of
+        Just account ->
+            div [ userRibbonStyle]
+                [ Ribbon.ribbon_left (bannerConfig ("Welcome "++ account.name) 500) |> St.toUnstyled
+                ]
+        Nothing ->
+            span [] []
 
 tastyCodeRibbonStyle =
     style [
@@ -76,9 +81,9 @@ navStyle =
         ]
 
 
-sHeader links =
+sHeader links model=
     header [ headerStyle ]
-        [ sTitle
+        [ sTitle model
         , tastyCodeRibbon
         , sLinks links
         ]
@@ -114,15 +119,15 @@ titleStlye =
     style [
          ("justify-content", "space-between")
         ]
-sTitle =
+sTitle model =
     div [ headerRowStyle, titleStlye ]
         [ span [] [ (img [ src "assets/syntax_sugar.png" ] []) ]
-        , userRibbon
+        , userRibbon model
         ]
 
 
-view2 body links =
+view body links model =
     div [ containerStyle ]
-        [ (sHeader links)
+        [ (sHeader links model)
         ,  body
         ]

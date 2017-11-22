@@ -21,7 +21,6 @@ import Msg exposing(Msg(..))
 import SignIn as SignInView
 
 
-
 type alias CustomerModel =
     { list : List String
     }
@@ -39,7 +38,7 @@ type alias Model =
     { customersModel : CustomerModel
     , ordersModel : EmptyModel
     , inventoryModel : EmptyModel
-    , selectedTab : Int
+    , selectedPageIndex : Int
     , accountModel : Maybe AccountModel
     }
 
@@ -48,7 +47,7 @@ model =
     { customersModel = CustomerModel [ "joe", "sue", "betty", "wilma", "frank" ]
     , ordersModel = EmptyModel
     , inventoryModel = EmptyModel
-    , selectedTab = 0
+    , selectedPageIndex = 0
     , accountModel = Nothing
     }
 
@@ -87,43 +86,43 @@ update msg model =
             D.log "update"
     in
         case msg of
-            SelectTab idx ->
-                ( { model | selectedTab = idx }, Cmd.none )
+            SelectPage idx ->
+                ( { model | selectedPageIndex = idx }, Cmd.none )
 
-            CustomersTab msg ->
+            CustomersPage msg ->
                 ( model, Cmd.none )
 
-            EmptyTab msg ->
+            EmptyPage msg ->
                 ( model, Cmd.none )
 
-            SignInMsg ->
-                ( {model | accountModel = Just ({name ="joe"})} , Cmd.none )
-
-            SignUpMsg ->
-                ( model ,Cmd.none )
+            SignInPage msg ->
+                ( {model | accountModel = Just ({name = "Joe"}),
+                           selectedPageIndex = 1
+                  } , Cmd.none )
 
 
 tabSet =
-    [ ( "Customers", "cust", .customersModel >> CustomersView.view >> Html.map CustomersTab )
-    , ( "Orders", "ord", .ordersModel >> EmptyView.view >> Html.map EmptyTab )
-    , ( "Inventory", "invt", .inventoryModel >> EmptyView.view >> Html.map EmptyTab )
+    [
+     ( 0,"SignIn", "signIn", .accountModel >> SignInView.view >> Html.map SignInPage )
+    , ( 1,"Customers", "cust",.customersModel >> CustomersView.view >> Html.map CustomersPage )
+    , ( 1,"Orders", "ord", .ordersModel >> EmptyView.view >> Html.map EmptyPage )
+    , ( 1,"Inventory", "inv", .inventoryModel >> EmptyView.view >> Html.map EmptyPage )
     ]
 
 
-tabViews =
-    List.map (\( _, _, v ) -> v) tabSet |> Array.fromList
 
+tabViews =
+    List.map (\(_, _, _, v ) -> v) tabSet |> Array.fromList
 
 tabNames =
-    ( tabSet |> List.map (\( x, _, _ ) -> text x), [] )
-
+    ( tabSet |> List.map (\(_, x, _, _ ) -> text x), [] )
 
 urlTabs =
-    List.indexedMap (\idx ( _, x, _ ) -> ( x, idx )) tabSet |> Dict.fromList
+    List.indexedMap (\idx (_, _, u, _ ) -> ( u, idx )) tabSet |> Dict.fromList
 
 
 tabUrls =
-    List.map (\( _, x, _ ) -> x) tabSet |> Array.fromList
+    List.map (\(_,_, u, _ ) -> u) tabSet |> Array.fromList
 
 
 e404 _ =
@@ -132,22 +131,22 @@ e404 _ =
         ]
 
 view model =
-    case model.accountModel of
-        Nothing ->
-            Layout.view2 SignInView.view0 []
-
-        Just account ->
-            viewForAccount model
-
-viewForAccount model =
     let
-        currentTab =
-            (Array.get model.selectedTab tabViews |> Maybe.withDefault e404) model
+        currentView =
+            (Array.get model.selectedPageIndex tabViews |> Maybe.withDefault e404) model
 
         tabLinks =
-            List.map (\( name, href_, _ ) -> Html.a [ href ( "#" ++ href_) ] [ text name ]) tabSet
+            case model.accountModel of
+                Nothing ->
+                    []
+                Just a ->
+                  (List.map
+                      (\(_,name,href_, _ ) ->
+                                Html.a [ href ( "#" ++ href_) ] [ text name ])
+                      (List.filter (\(i,_,_,_) ->  i == 1 ) tabSet)
+                  )
     in
-        Layout.view2 currentTab tabLinks
+        Layout.view currentView tabLinks model.accountModel
 
 
 subscriptions model =
@@ -156,12 +155,12 @@ subscriptions model =
 
 urlOf : Model -> String
 urlOf model =
-  "#"  ++ (Array.get model.selectedTab tabUrls |> Maybe.withDefault "")
+  "#"  ++ (Array.get model.selectedPageIndex tabUrls |> Maybe.withDefault "")
 
 
 delta2url : Model -> Model -> Maybe Routing.UrlChange
 delta2url model1 model2 =
-    if model1.selectedTab /= model2.selectedTab then
+    if model1.selectedPageIndex /= model2.selectedPageIndex then
         { entry = Routing.NewEntry
         , url = urlOf model2
         }
@@ -178,10 +177,10 @@ location2messages location =
     in
         [ case String.dropLeft 1 location.hash of
             "" ->
-                SelectTab 0
+                SelectPage 0
 
             x ->
                 Dict.get x urlTabs
                     |> Maybe.withDefault -1
-                    |> SelectTab
+                    |> SelectPage
         ]

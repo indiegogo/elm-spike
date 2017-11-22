@@ -1,10 +1,12 @@
-module SignIn exposing (view0)
+module SignIn exposing (view, Msg)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing(onClick)
 
-import Msg 
+type Msg =
+    SignInMsg
+    |SignUpMsg
 
 inputStyle =
     style
@@ -34,14 +36,14 @@ wrapperStyle =
     style [
          ("min-width", "500px")
         ]
-view0 =
+view model =
     div [ signInStyle ]
         [ div [wrapperStyle]
             [ input [ inputStyle, name "username", type_ "text", placeholder "username" ] []
             ]
         , div [wrapperStyle]
             [ input [ inputStyle, name "password", type_ "password", placeholder "password" ] []
-             , button [buttonStyle, onClick (Msg.SignInMsg)] [text "Sign In"]
+             , button [buttonStyle, onClick (SignInMsg)] [text "Sign In"]
             ]
         , div [wrapperStyle]
             [ input
@@ -51,6 +53,6 @@ view0 =
                 , placeholder "password confirmation"
                 ]
                 []
-             , button [buttonStyle, onClick (Msg.SignUpMsg)] [text "Sign Up"]
+             , button [buttonStyle, onClick (SignUpMsg)] [text "Sign Up"]
             ]
         ]
