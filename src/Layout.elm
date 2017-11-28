@@ -34,7 +34,7 @@ userRibbon model =
     case model of
         Just account ->
             div [ userRibbonStyle]
-                [ Ribbon.ribbon_left (bannerConfig ("Welcome "++ account.name) 500) |> St.toUnstyled
+                [ Ribbon.ribbon_left (bannerConfig ("Welcome "++ account.username) 500) |> St.toUnstyled
                  , a [onClick SignOut] [text "Sign Out"]
                 ]
         Nothing ->

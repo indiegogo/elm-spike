@@ -4,9 +4,10 @@ import Debug as D exposing (log)
 import RouteUrl as Routing
 import Navigation
 import Dict
-import Msg exposing(Msg(..))
+import Msg exposing (Msg(..))
 
 import Layout
+import SignIn
 
 
 type alias CustomerModel =
@@ -18,8 +19,9 @@ type alias EmptyModel =
     {}
 
 
-type alias AccountModel =
-    { name : String}
+type alias Account =
+    { username : String
+    }
 
 
 type alias Model =
@@ -27,7 +29,8 @@ type alias Model =
     , ordersModel : EmptyModel
     , inventoryModel : EmptyModel
     , selectedPageIndex : Int
-    , accountModel : Maybe AccountModel
+    , signInModel : SignIn.Model
+    , accountModel : Maybe Account
     }
 
 
@@ -36,6 +39,7 @@ model =
     , ordersModel = EmptyModel
     , inventoryModel = EmptyModel
     , selectedPageIndex = 0
+    , signInModel = SignIn.initModel
     , accountModel = Nothing
     }
 
@@ -73,27 +77,47 @@ update msg model =
         c =
             D.log "update"
     in
-    case msg of
-        SelectPage idx ->
-            case model.accountModel of
-                Just a -> 
-                    ( { model | selectedPageIndex = idx }, Cmd.none )
-                Nothing ->
-                    (model, Cmd.none)
-        SignInPage msg ->
-            ( {model | accountModel = Just ({name = "Joe"}),
-                   selectedPageIndex = 1
-              } , Cmd.none )
-        CustomersPage msg ->
-            ( model, Cmd.none )
+        case msg of
+            SelectPage idx ->
+                case model.accountModel of
+                    Just a ->
+                        ( {model| selectedPageIndex = idx}, Cmd.none )
 
-        EmptyPage msg ->
-            ( model, Cmd.none )
+                    Nothing ->
+                        ( model, Cmd.none )
 
-        SignOut ->
-            ({model| accountModel = Nothing,
-                     selectedPageIndex = 0
-             }, Cmd.none)
+            SignInPage msg ->
+                let
+                    next =
+                        (SignIn.update msg model.signInModel)
+
+                    signInModel =
+                        (Tuple.first next)
+
+                    cmd =
+                        Tuple.second next
+                in
+                    case signInModel.state of
+                        SignIn.Valid ->
+                         ( {model| accountModel = (Just (Account signInModel.username))
+                                   ,selectedPageIndex = 1 
+                           }, cmd )
+                        _ ->
+                        ( { model | signInModel = signInModel }, cmd )
+
+            CustomersPage msg ->
+                ( model, Cmd.none )
+
+            EmptyPage msg ->
+                ( model, Cmd.none )
+
+            SignOut ->
+                ( { model
+                    | accountModel = Nothing
+                    , selectedPageIndex = 0
+                  }
+                , Cmd.none
+                )
 
 
 view model =

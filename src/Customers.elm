@@ -2,14 +2,13 @@ module Customers exposing (view, Msg)
 
 import Html exposing (Html, text, div)
 import Html.Attributes exposing(style)
-import Material
 import Material.Card as Card
 import Material.Options as Options exposing (cs, css)
 import Material.Color as Color
 import Material.Typography as Typography
 
 type Msg =
-    Mdl (Material.Msg Msg)
+    Msg
 
 white : Options.Property c m
 white =
