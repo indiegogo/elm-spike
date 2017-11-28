@@ -1,4 +1,5 @@
-/elm-stuff
+**/elm-stuff
+*./elm-stuff
 .\#*
 public/assets/elm.js
 
