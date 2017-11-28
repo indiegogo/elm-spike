@@ -49,7 +49,7 @@ tastyCodeRibbonStyle =
 tastyCodeRibbon =
     div [ tastyCodeRibbonStyle] [
     Ribbon.ribbon_right
-        (bannerConfig "Tasty Code Cakes Banner" 300) |> St.toUnstyled
+        (bannerConfig "TASTY CODE CAKES ON THE INTERWEBS" 300) |> St.toUnstyled
         ]
 
 

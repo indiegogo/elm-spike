@@ -1,6 +1,6 @@
 module Main exposing (main)
 
-import Reactor exposing (update, view, init, subscriptions, delta2url, location2messages)
+import Core exposing (update, view, init, subscriptions, delta2url, location2messages)
 import RouteUrl as Routing
 
 main =

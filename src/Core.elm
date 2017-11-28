@@ -1,4 +1,4 @@
-module Reactor exposing (update, view, init, subscriptions, location2messages, delta2url)
+module Core exposing (update, view, init, subscriptions, location2messages, delta2url)
 
 import Debug as D exposing (log)
 import RouteUrl as Routing
@@ -76,7 +76,7 @@ update msg model =
             D.log "msg" msg
 
         c =
-            D.log "update"
+            D.log "update" "update"
     in
         case msg of
             SelectPage idx ->
