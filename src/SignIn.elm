@@ -171,7 +171,7 @@ view model =
 update msg model =
     case msg of
         SignInMsg ->
-            ( { model | state = Verifying }, Cmd.none )
+            ( { model | state = Verifying }, verifyUserCmd )
 
         SignUpMsg ->
             ( model, Cmd.none )
@@ -215,7 +215,7 @@ update msg model =
 
 
 verifyUserCmd =
-    Http.send VerifyAccount <|
+    Http.send VerifyAccount (
         Http.request
             { method = "PUT"
             , headers = []
@@ -225,3 +225,4 @@ verifyUserCmd =
             , timeout = Nothing
             , withCredentials = False
             }
+      )

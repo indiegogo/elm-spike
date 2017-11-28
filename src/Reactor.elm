@@ -10,6 +10,7 @@ import Layout
 import SignIn
 
 
+
 type alias CustomerModel =
     { list : List String
     }
@@ -95,13 +96,14 @@ update msg model =
                         (Tuple.first next)
 
                     cmd =
-                        Tuple.second next
+                         Cmd.map SignInPage <| (Tuple.second next)
+
                 in
                     case signInModel.state of
                         SignIn.Valid ->
                          ( {model| accountModel = (Just (Account signInModel.username))
                                    ,selectedPageIndex = 1 
-                           }, cmd )
+                           }, Cmd.none )
                         _ ->
                         ( { model | signInModel = signInModel }, cmd )
 
