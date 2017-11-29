@@ -131,7 +131,7 @@ titleStlye =
         ]
 sTitle model =
     div [ headerRowStyle, titleStlye ]
-        [ span [] [ (img [ src "assets/syntax_sugar.png" ] []) ]
+        [ span [] [ (img [ src "/assets/syntax_sugar.png" ] []) ]
         , userRibbon model
         ]
 
@@ -152,10 +152,10 @@ view model =
 
 tabSet =
     [
-     ( 0,"SignIn", "signIn", .accountModel >> SignInView.view >> Html.map SignInPage )
-    , ( 1,"Customers", "cust",.customersModel >> CustomersView.view >> Html.map CustomersPage )
-    , ( 1,"Orders", "ord", .ordersModel >> EmptyView.view >> Html.map EmptyPage )
-    , ( 1,"Inventory", "inv", .inventoryModel >> EmptyView.view >> Html.map EmptyPage )
+     ( 0,"SignIn", "signIn", .accountModel >> SignInView.view >> Html.map SignInPage ) --0
+    , ( 1,"Customers", "cust",.customersModel >> CustomersView.view >> Html.map CustomersPage ) --1
+    , ( 1,"Orders", "ord", .ordersModel >> EmptyView.view >> Html.map EmptyPage ) -- ...
+    , ( 1,"Inventory", "inv", .inventoryModel >> EmptyView.view >> Html.map EmptyPage ) -- ...
     ]
 
 

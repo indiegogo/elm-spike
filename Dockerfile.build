@@ -12,6 +12,7 @@ RUN elm-package install --yes
 
 
 COPY public/ public/
+COPY assets/ public/assets/
 COPY src/ src/
 RUN elm-make  src/Main.elm --output public/assets/elm.js
 
