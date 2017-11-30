@@ -49,7 +49,7 @@ tastyCodeRibbonStyle =
 tastyCodeRibbon =
     div [ tastyCodeRibbonStyle] [
     Ribbon.ribbon_right
-        (bannerConfig "TASTY CODE CAKES ON THE INTERWEBS" 300) |> St.toUnstyled
+        (bannerConfig "TASTY CODE CAKES ON THE INTERWEBS" 800) |> St.toUnstyled
         ]
 
 
@@ -137,7 +137,7 @@ sTitle model =
 
 e404 _ =
     div []
-        [ Html.h1 [] [ text "404" ]
+        [ Html.h1 [] [ text "404 u" ]
         ]
 
 view model =

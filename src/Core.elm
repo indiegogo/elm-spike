@@ -80,12 +80,12 @@ update msg model =
     in
         case msg of
             SelectPage idx ->
-                case model.accountModel of
-                    Just a ->
-                        ( {model| selectedPageIndex = idx}, Cmd.none )
+              case model.accountModel of
+                  Just a ->
+                      ( {model| selectedPageIndex = idx}, Cmd.none )
 
-                    Nothing ->
-                        ( model, Cmd.none )
+                  Nothing ->
+                      ( model, Cmd.none )
 
             SignInPage msg ->
                 let
@@ -102,10 +102,11 @@ update msg model =
                     case signInModel.state of
                         SignIn.Valid ->
                          ( {model| accountModel = (Just (Account signInModel.username))
-                                   ,selectedPageIndex = 1 
-                           }, Cmd.none )
+                                   ,selectedPageIndex = 1
+                                   ,signInModel = signInModel
+                           }, cmd )
                         _ ->
-                        ( { model | signInModel = signInModel }, cmd )
+                            ( { model | signInModel = signInModel }, cmd )
 
             CustomersPage msg ->
                 ( model, Cmd.none )
