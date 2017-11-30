@@ -1,4 +1,4 @@
-module Simple exposing (main)
+module SimpleWithWidget exposing (main)
 
 import Widget
 import Html exposing (Html, text, program, div)
