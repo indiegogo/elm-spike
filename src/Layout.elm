@@ -179,8 +179,10 @@ tabLinks model =
             []
         Just a ->
           (List.map
-              (\(_,name,href_, _ ) ->
-                        Html.a [ href ( "#" ++ href_) ] [ text name ])
+              (
+                    \(_,name,href_, _ ) ->
+                        Html.a [ href ( "#" ++ href_) ] [ text name ]
+              )
               (List.filter (\(i,_,_,_) ->  i == 1 ) tabSet)
           )
 

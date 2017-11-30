@@ -1,0 +1,92 @@
+<!DOCTYPE Html>
+<html>
+
+  <head>
+    <title> Elm-Spike </title>
+    <meta charset="utf8" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+    <link href="/assets/material.orange-light_blue.min.css" rel="stylesheet" />
+
+    <style type="text/css">
+     @import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro);
+     html,
+     head,
+     body {
+       margin: 0;
+       height: 100%;
+     }
+    </style>
+  </head>
+
+  <body>
+  </body>
+  <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
+  <script>
+   // Initialize Firebase
+
+   function initializeFirebase() {
+     var config = {
+       apiKey: "AIzaSyCpzjTw3OkgA8-eYit7kUUte8dNiITYXLA",
+       authDomain: "elm-spike.firebaseapp.com",
+       databaseURL: "https://elm-spike.firebaseio.com",
+       projectId: "elm-spike",
+       storageBucket: "elm-spike.appspot.com",
+       messagingSenderId: "799675640107"
+     };
+     firebase.initializeApp(config);
+   }
+   let initializeAuthStateChanged = function() {
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+        console.log("OnAuthStateChange Fired :", user)
+        elmFirePort.ports.fromFirebase.send(user.email);
+      }else {
+        console.log("OnAuthStateChange Fired null User :")
+        elmFirePort.ports.fromFirebase.send(null);
+      }
+    })
+   };
+
+   let signInWithRedirect = function() {
+     var provider = new firebase.auth.GithubAuthProvider();
+     provider.addScope('user');
+     firebase.auth().signInWithRedirect(provider);
+   }
+
+   let signOut = function() {
+     firebase.auth().signOut().then(function(thing){
+          console.log("signout says success ", thing);
+     }).catch(function(error){
+          console.log("signout says failure ", error);
+     });
+
+     elmFirePort.ports.fromFirebase.send(null);
+   }
+
+  </script>
+  <script src="/_compile/src/FirePort.elm"></script>
+
+  <script>
+   window.elmFirePort = Elm.FirePort.fullscreen();
+
+   initializeFirebase();
+   initializeAuthStateChanged();
+
+   console.log(elmFirePort.ports);
+
+   elmFirePort.ports.toFirebase.subscribe(function(msg) {
+     console.log("Chomp Chomp .. got a message from Elm :: ", msg)
+     switch (msg) {
+       case "Trigger/Login":
+         signInWithRedirect();
+         break;
+       case "Trigger/Logout":
+         signOut();
+         break;
+        }
+
+    })
+</script>
+
+</html>

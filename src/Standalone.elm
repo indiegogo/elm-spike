@@ -16,6 +16,7 @@ main =
         }
 
 
+
 type alias Model =
     { name : String
      , time : Maybe Time.Time
@@ -46,7 +47,7 @@ update msg model =
     in
     case msg of
         ChangeName ->
-            case model.time of
+            case model.time of -- Maybe Time
                 Just time ->
                     ( { model | name = ("New Name" ++ (toString time))}, myTask )
                 Nothing   ->
@@ -55,6 +56,6 @@ update msg model =
             ( { model | time = Just time } , Cmd.none)
 
 subscriptions model =
-   -- Time.every Time.second NewTime
-   Sub.none
+   Time.every Time.second NewTime
+   -- Sub.none
 

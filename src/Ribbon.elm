@@ -1,11 +1,10 @@
-module Ribbon exposing (example, ribbon_left, ribbon_right, ribbon_full, defaultConfig)
+module Ribbon exposing (example, ribbon_left, ribbon_right, ribbon_full, defaultConfig, main)
 
 import Css exposing (..)
 import Css.Colors
-import Html
+import Html exposing (program)
 import Html.Styled as H exposing (..)
 import Html.Styled.Attributes as SA exposing (css, href, src, styled)
-import Html.Styled.Events exposing (onClick)
 import List exposing (concat)
 
 
@@ -18,6 +17,19 @@ type alias Config =
     , messageBorderColor : Css.Color
     , message : String
     }
+
+
+main =
+    Html.program
+        { view = \m -> (example m.message) |> H.toUnstyled
+        , update = update
+        , init = ( { message = "I'm the Example Ribbon" }, Cmd.none )
+        , subscriptions = (always Sub.none)
+        }
+
+
+update msg model =
+    ( model, Cmd.none )
 
 
 example msg =
