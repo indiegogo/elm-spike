@@ -1,7 +1,7 @@
 
 module Standalone exposing (main)
 
-import Html exposing (Html, div, program, text)
+import Html exposing (Html, div, program, text, br)
 import Html.Events exposing (onClick)
 import Time
 
@@ -34,12 +34,14 @@ init =
 
 view model =
     div [ onClick ChangeName ]
-        [ "this is a html program with name " ++ model.name |> text
+        [
+         div [] [ "The Current Time is " ++ (toString model.time) |> text]
+       ,  div [] [ "this is a html program with name " ++ model.name |> text]
         ]
 
 update msg model =
-    let 
-        myTask = 
+    let
+        myTask =
             Task.perform NewTime Time.now
     in
     case msg of
@@ -51,8 +53,8 @@ update msg model =
                     ( { model | name = "New Name Without Time" }, myTask )
         NewTime time ->
             ( { model | time = Just time } , Cmd.none)
-            
 
 subscriptions model =
-    Sub.none
+   -- Time.every Time.second NewTime
+   Sub.none
 
