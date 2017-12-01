@@ -1,31 +1,34 @@
--- I have to read this everytime i make a port
---
--- https://hackernoon.com/how-elm-ports-work-with-a-picture-just-one-25144ba43cdd
---
-
-
 port module FirePort exposing (main, initModel, update, view, subscriptions, Msg(..), Model)
+
+--
+-- how elm ports work
+-- https://hackernoon.com/how-elm-ports-work-with-a-picture-just-one-25144ba43cdd
 
 import Html
 import Html.Events
-import Html.Attributes
-import Json.Encode exposing (Value)
+import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode
 
 
-port toFirebase : String -> Cmd msg
-port fromFirebase : (Value -> msg) -> Sub msg
-port tacoTruck : String -> Cmd msg
+port toFirebase : ( String, Maybe Value ) -> Cmd msg
+
+
+port fromFirebaseAuth : (Value -> msg) -> Sub msg
+
+
+port fromFirebaseDB : (Value -> msg) -> Sub msg
+
 
 type FirebaseMsg
     = Login
     | Logout
+    | Create Value
 
 
 type Msg
-    = UpdateElmFromFirebase (Maybe User)
-    | FirebaseAuth FirebaseMsg
-    | AnythingElse 
+    = AuthFromFirebase (Maybe User)
+    | FireBase FirebaseMsg
+    | FirebaseDBUpdate String
 
 
 type AuthStatus
@@ -42,6 +45,7 @@ type alias User =
 type alias Model =
     { status : AuthStatus
     , user : Maybe User
+    , dbMsg : String
     }
 
 
@@ -56,55 +60,101 @@ main =
 
 initModel : Model
 initModel =
-    { status = Verifying, user = Nothing }
+    { status = Verifying, user = Nothing, dbMsg = "" }
 
 
 init =
     ( initModel, Cmd.none )
 
+
 view model =
     case model.status of
         Verifying ->
-            Html.div [] [ Html.text "..initializing auth provider" ]
+            viewVerifying
 
         NoAuth ->
-            Html.div []
-                [ Html.button [ Html.Events.onClick (FirebaseAuth Login) ] [ Html.text "Trigger Login Flow with Firebase" ]
-                , Html.div [] [ Html.text (.user >> toString <| model) ]
-                ]
+            viewLoggedOut model
 
         Auth ->
-            renderLoggedIn model
+            viewLoggedIn model
 
-renderLoggedIn model =
-  Html.div []
-      [ Html.div [] [ Html.text (.user >> toString <| model) ]
-      , Html.button [ Html.Events.onClick (FirebaseAuth Logout) ] [ Html.text "Logout"]
-      ]
+viewDbMsg model=
+    Html.div [] [Html.text "Last DB Message ", Html.text model.dbMsg  ]
+
+viewVerifying =
+    Html.div [] [ Html.text "..initializing auth provider" ]
+
+
+viewLoggedOut model =
+    Html.div []
+        [ Html.button [ Html.Events.onClick (FireBase Login) ] [ Html.text "Trigger Login Flow with Firebase" ]
+        , Html.div [] [ Html.text (.user >> toString <| model) ]
+
+        ]
+
+
+viewLoggedIn model =
+    Html.div []
+        [ Html.div [] [Html.text "Current User is " ,Html.text (.user >> toString <| model) ]
+        , Html.button [ Html.Events.onClick (FireBase Logout) ] [ Html.text "Logout" ]
+        , Html.button [ Html.Events.onClick (FireBase (Create newUser)) ] [ Html.text "Create User" ]
+        , viewDbMsg model
+        ]
+
+
+newUser =
+    Encode.object
+        [ ( "name", Encode.string "Detective Sam Spade" )
+        , ( "birthday", Encode.string "11/02/1979" )
+        ]
+
+
 
 -- https://staltz.com/unidirectional-user-interface-architectures.html
-update : Msg -> Model -> (Model, Cmd msg)
+
+
+update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
-        UpdateElmFromFirebase maybeUser ->
+        FirebaseDBUpdate lastUpdateMessage ->
+            ( { model | dbMsg = lastUpdateMessage }, Cmd.none )
+
+        AuthFromFirebase maybeUser ->
             case maybeUser of
                 Nothing ->
-                    ( { model | status = NoAuth, user = Nothing}, Cmd.none )
+                    ( { model | status = NoAuth, user = Nothing }, Cmd.none )
 
                 Just _ ->
                     ( { model | user = maybeUser, status = Auth }, Cmd.none )
 
-        FirebaseAuth Login ->
-            ( model, toFirebase "Trigger/Login" )
+        FireBase Login ->
+            ( model, toFirebase ( "Trigger/Login", Nothing ) )
 
-        FirebaseAuth Logout ->
-            ( model, toFirebase "Trigger/Logout" )
-        AnythingElse ->
-            ( model, Cmd.none)
+        FireBase Logout ->
+            ( model, toFirebase ( "Trigger/Logout", Nothing ) )
+
+        FireBase (Create valueObject) ->
+            ( model, toFirebase ( "Database/User/Create", Just valueObject ) )
 
 
 subscriptions _ =
-    fromFirebase (decodeFirebaseValue)
+    Sub.batch
+        [ fromFirebaseAuth (decodeFirebaseValue)
+        , fromFirebaseDB (decodeFirebaseDBValue)
+        ]
+
+
+decodeFirebaseDBValue v =
+    let
+        result =
+            Decode.decodeValue Decode.string v
+    in
+        case result of
+            Ok string ->
+                FirebaseDBUpdate string
+
+            Err msg ->
+                FirebaseDBUpdate ("Unknown Error :" ++ (toString msg))
 
 
 decodeFirebaseValue v =
@@ -114,7 +164,7 @@ decodeFirebaseValue v =
     in
         case result of
             Ok string ->
-                UpdateElmFromFirebase (Just { email = string })
+                AuthFromFirebase (Just { email = string })
 
             Err msg ->
-                UpdateElmFromFirebase Nothing
+                AuthFromFirebase Nothing
