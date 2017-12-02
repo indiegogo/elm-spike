@@ -1,7 +1,7 @@
 <!DOCTYPE Html>
 <html>
 
-  <head>
+<head>
     <title> Elm-Spike </title>
     <meta charset="utf8" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
@@ -9,105 +9,133 @@
     <link href="/assets/material.orange-light_blue.min.css" rel="stylesheet" />
 
     <style type="text/css">
-     @import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro);
-     html,
-     head,
-     body {
-       margin: 0;
-       height: 100%;
-     }
-    </style>
-  </head>
-
-  <body>
-  </body>
-  <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
-  <script>
-   // Initialize Firebase
-
-   function initializeFirebase() {
-     var config = {
-       apiKey: "AIzaSyCpzjTw3OkgA8-eYit7kUUte8dNiITYXLA",
-       authDomain: "elm-spike.firebaseapp.com",
-       databaseURL: "https://elm-spike.firebaseio.com",
-       projectId: "elm-spike",
-       storageBucket: "elm-spike.appspot.com",
-       messagingSenderId: "799675640107"
-     };
-     firebase.initializeApp(config);
-   }
-   let initializeAuthStateChanged = function() {
-    firebase.auth().onAuthStateChanged(function(user) {
-      if (user) {
-        console.log("OnAuthStateChange Fired :", user)
-        elmFirePort.ports.fromFirebaseAuth.send(user.email);
-      }else {
-        console.log("OnAuthStateChange Fired null User :")
-        elmFirePort.ports.fromFirebaseAuth.send(null);
-      }
-    })
-   };
-
-   let signInWithRedirect = function() {
-     var provider = new firebase.auth.GithubAuthProvider();
-     provider.addScope('user');
-     firebase.auth().signInWithRedirect(provider);
-   }
-
-   let signOut = function() {
-     firebase.auth().signOut().then(function(thing){
-          console.log("signout says success ", thing);
-     }).catch(function(error){
-          console.log("signout says failure ", error);
-     });
-
-     elmFirePort.ports.fromFirebaseAuth.send(null);
-   }
-
-
-   let userCreate = function(user_ob) {
-     var database = firebase.database();
-     var nextKey = database.ref().child("users").push().key;
-     let updates = {}
-     updates["/users/"+nextKey] = user_ob;
-
-     let ret = database.ref().update(updates).then(function() {
-       console.log("update success" + nextKey)
-       elmFirePort.ports.fromFirebaseDB.send("wrote last value");
-     }).catch(function(){
-       console.log("update fail" + nextKey)
-       elmFirePort.ports.fromFirebaseDB.send("failed to write value");
-     });
-
-   }
-  </script>
-  <script src="/_compile/src/FirePort.elm"></script>
-
-  <script>
-   window.elmFirePort = Elm.FirePort.fullscreen();
-
-   initializeFirebase();
-   initializeAuthStateChanged();
-
-   console.log(elmFirePort.ports);
-
-   elmFirePort.ports.toFirebase.subscribe(function(msg) {
-     console.log("Chomp Chomp .. got a message from Elm :: ", msg)
-     switch (msg[0]) {
-       case "Trigger/Login":
-         signInWithRedirect();
-         break;
-       case "Trigger/Logout":
-         signOut();
-         break;
-       case "Database/User/Create":
-         console.log("Database create ", msg[1])
-         userCreate(msg[1])
-         break;
-       case "Database/User/List":
-         break;
+        @import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro);
+        html,
+        head,
+        body {
+            margin: 0;
+            height: 100%;
         }
-    })
+    </style>
+</head>
+
+<body>
+</body>
+<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
+<script>
+ // Initialize Firebase
+
+ function initializeFirebase() {
+   var config = {
+     apiKey: "AIzaSyCpzjTw3OkgA8-eYit7kUUte8dNiITYXLA",
+     authDomain: "elm-spike.firebaseapp.com",
+     databaseURL: "https://elm-spike.firebaseio.com",
+     projectId: "elm-spike",
+     storageBucket: "elm-spike.appspot.com",
+     messagingSenderId: "799675640107"
+   };
+   firebase.initializeApp(config);
+ }
+ let initializeAuthStateChanged = function() {
+   firebase.auth().onAuthStateChanged(function(user) {
+     if (user) {
+       console.log("OnAuthStateChange Fired :", user)
+       elmFirePort.ports.fromFirebaseAuth.send(user.email);
+     } else {
+       console.log("OnAuthStateChange Fired null User :")
+       elmFirePort.ports.fromFirebaseAuth.send(null);
+     }
+   })
+ };
+ let initalizeRealtimeCustomerUpdates = function() {
+   var database = firebase.database();
+   database.ref().child("customers").on("value",function(snapshot) {
+     elmFirePort.ports.fromFirebaseDB.send(
+       flattenWithId(snapshot.val() || [])
+     );
+
+   })
+ }
+ let flattenWithId = function(thing) {
+   let customersWithKey = [];
+   for (member in thing) {
+     let tmp = thing[member];
+     tmp.id = member;
+     customersWithKey.push(tmp)
+   }
+   return customersWithKey;
+ }
+ let signInWithRedirect = function() {
+   var provider = new firebase.auth.GithubAuthProvider();
+   provider.addScope('user');
+   firebase.auth().signInWithRedirect(provider);
+ }
+
+ let signOut = function() {
+   firebase.auth().signOut().then(function(thing) {
+     console.log("signout says success ", thing);
+   }).catch(function(error) {
+     console.log("signout says failure ", error);
+   });
+
+   elmFirePort.ports.fromFirebaseAuth.send(null);
+ }
+
+
+ let customerCreate = function(user_ob) {
+   var database = firebase.database();
+   var nextKey = database.ref().child("customers").push().key;
+   let updates = {}
+   updates["/customers/" + nextKey] = user_ob;
+
+   let ret = database.ref().update(updates).then(function() {
+     console.log("update success" + nextKey)
+     // update customer list fresh (simple case)
+     getCustomers()
+   }).catch(function() {
+     console.log("update fail" + nextKey)
+     // getCustomers()
+     // let know failure
+   });
+ }
+ let getCustomers = function() {
+   var database = firebase.database();
+   database.ref().child("customers").once("value").then((customers) => {
+     let customersWithKey = flattenWithId(customers.val() || []);
+     elmFirePort.ports.fromFirebaseDB.send(
+       customersWithKey
+     );
+   });
+ }
+</script>
+<script src="/_compile/src/FirePort.elm"></script>
+
+<script>
+ window.elmFirePort = Elm.FirePort.fullscreen();
+
+ initializeFirebase();
+ initializeAuthStateChanged();
+ initalizeRealtimeCustomerUpdates();
+ console.log(elmFirePort.ports);
+
+ elmFirePort.ports.toFirebase.subscribe(function(msg) {
+   console.log("Chomp Chomp .. got a message from Elm :: ", msg)
+   switch (msg[0]) {
+     case "Trigger/Login":
+       signInWithRedirect();
+       break;
+     case "Trigger/Logout":
+       signOut();
+       break;
+     case "Database/Customer/Create":
+       console.log("Database create ", msg[1])
+       customerCreate(msg[1])
+       break;
+     case "Database/Customer/List":
+       getCustomers()
+       break;
+   }
+ })
 </script>
 
 </html>
