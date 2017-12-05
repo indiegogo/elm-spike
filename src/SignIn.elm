@@ -1,11 +1,11 @@
-module SignIn exposing (view, update,Msg, Model, SessionState(..), initModel, subscriptions)
+module SignIn exposing (view, update,Msg(..), Model, SessionState(..), initModel, subscriptions)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Debug as D
 
-import FirePort as Firebase 
+import Firebase.Auth as FireAuth exposing (Msg)
 
 type Msg
     = SignInMsg
@@ -13,7 +13,7 @@ type Msg
     | SetUsername String
     | SetPassword String
     | SetPasswordConfirmation String
-    | Firebase Firebase.Msg
+    | FireAuth FireAuth.Msg
 
 
 
@@ -22,12 +22,17 @@ type SessionState
     | Verifying
     | Valid
 
+type alias Account =
+    { username : String
+    }
+
 
 type alias Model =
     { username : String
     , password : String
     , state : SessionState
-    , firebaseModel : Firebase.Model
+    , firebaseModel : FireAuth.Model
+    , accountModel : Maybe Account
     }
 
 
@@ -35,7 +40,8 @@ initModel =
     { username = ""
     , password = ""
     , state = InValid
-    , firebaseModel = Firebase.initModel
+    , firebaseModel = FireAuth.initModel
+    , accountModel = Nothing
     }
 
 
@@ -95,7 +101,7 @@ view model =
             ]
         , div [wrapperStyle ]
             [
-             Html.map Firebase (Firebase.view model.firebaseModel)
+             Html.map FireAuth (FireAuth.view model.firebaseModel)
             ]
         ]
 
@@ -103,7 +109,9 @@ view model =
 update msg model =
     case msg of
         SignInMsg ->
-            ( { model | state = Valid }, Cmd.none )
+            ( { model | state = Valid
+              , accountModel = (Just (Account model.username))
+              }, Cmd.none )
 
         SignUpMsg ->
             ( model, Cmd.none )
@@ -117,10 +125,10 @@ update msg model =
         SetPasswordConfirmation str ->
             ( model, Cmd.none )
 
-        Firebase msg ->
+        FireAuth msg ->
             let
                 (result, cmd) =
-                    Firebase.update msg model.firebaseModel
+                    FireAuth.update msg model.firebaseModel
 
                 username =
                     case result.user of
@@ -129,18 +137,25 @@ update msg model =
                            Nothing ->
                                ""
                 state =
-                    case Firebase.authorized result of
+                    case FireAuth.authorized result of
                         True ->
                             Valid
                         False ->
                             InValid
+
+                accountModel = case state of
+                                   Valid ->
+                                       (Just (Account username))
+                                   _ ->
+                                       Nothing
             in
                 ({model |
                       firebaseModel = result
                       , state = state
                       , username = username
-                 }, Cmd.map Firebase cmd)
+                      , accountModel = accountModel
+                 }, Cmd.map FireAuth cmd)
 
 subscriptions model =
-    Sub.map Firebase (Firebase.subscriptions model)
+    Sub.map FireAuth (FireAuth.subscriptions model)
 
