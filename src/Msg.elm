@@ -9,4 +9,3 @@ type Msg
     | CustomersPage Customers.Msg
     | EmptyPage Empty.Msg
     | SignInPage SignIn.Msg
-    | SignOut

@@ -25,7 +25,7 @@
      Much of the advantage and protection of elm is lost when one starts to incorporate plain-javascript.
 
   -->
-<script src="/_compile/src/FirePort.elm"></script>
+<script src="/_compile/src/Firebase/FirePort.elm"></script>
 
 <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
 <script src="/assets/firebase.setup.js"></script>
@@ -34,7 +34,7 @@
 
 
 <script>
- window.elmFirePort = Elm.FirePort.fullscreen();
+ window.elmFirePort = Elm.Firebase.FirePort.fullscreen();
  console.log(elmFirePort.ports);
 
  let elmPort = elmFirePort.ports.toFirebase;

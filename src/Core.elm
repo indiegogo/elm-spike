@@ -20,9 +20,6 @@ type alias EmptyModel =
     {}
 
 
-type alias Account =
-    { username : String
-    }
 
 
 type alias Model =
@@ -31,7 +28,6 @@ type alias Model =
     , inventoryModel : EmptyModel
     , selectedPageIndex : Int
     , signInModel : SignIn.Model
-    , accountModel : Maybe Account
     }
 
 
@@ -41,7 +37,6 @@ model =
     , inventoryModel = EmptyModel
     , selectedPageIndex = 0
     , signInModel = SignIn.initModel
-    , accountModel = Nothing
     }
 
 
@@ -80,7 +75,7 @@ update msg model =
     in
         case msg of
             SelectPage idx ->
-              case model.accountModel of
+              case model.signInModel.accountModel of
                   Just a ->
                       ( {model| selectedPageIndex = idx}, Cmd.none )
 
@@ -97,15 +92,16 @@ update msg model =
 
                     cmd =
                          Cmd.map SignInPage <| (Tuple.second next)
-
                 in
                     case signInModel.state of
                         SignIn.Valid ->
-                         ( {model| accountModel = (Just (Account signInModel.username))
-                                   ,selectedPageIndex = 1
+                         ( {model|
+                                   selectedPageIndex = 1
                                    ,signInModel = signInModel
                            }, cmd )
-                        _ ->
+                        SignIn.InValid ->
+                            ( { model | signInModel = signInModel, selectedPageIndex = 0 }, cmd )
+                        SignIn.Verifying ->
                             ( { model | signInModel = signInModel }, cmd )
 
             CustomersPage msg ->
@@ -113,14 +109,6 @@ update msg model =
 
             EmptyPage msg ->
                 ( model, Cmd.none )
-
-            SignOut ->
-                ( { model
-                    | accountModel = Nothing
-                    , selectedPageIndex = 0
-                  }
-                , Cmd.none
-                )
 
 
 view model =

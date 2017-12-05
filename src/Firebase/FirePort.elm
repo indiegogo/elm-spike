@@ -1,4 +1,4 @@
-port module FirePort
+port module Firebase.FirePort
     exposing
         ( main
         , initModel
@@ -151,7 +151,7 @@ viewCustomers list =
             list
         )
 
-
+newCustomer: Value
 newCustomer =
     Encode.object
         [ ( "name", Encode.string "Detective Sam Spade" )
@@ -200,7 +200,7 @@ subscriptions _ =
         , fromFirebaseDB (decodeFirebaseDBValue)
         ]
 
-
+decodeFirebaseDBValue : Value -> Msg
 decodeFirebaseDBValue v =
     let
         result =

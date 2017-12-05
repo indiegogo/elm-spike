@@ -32,13 +32,19 @@
  var elm = Elm.Main.fullscreen();
  console.log(elm.ports);
 
- let elmPort = elm.ports.toFirebase;
+ let elmPortAuth = elm.ports.toFirebaseAuth;
+ let elmPortDB = elm.ports.toFirebaseDB;
+
  let dbElmSendPort  = elm.ports.fromFirebaseDB;
  let authElmSendPort = elm.ports.fromFirebaseAuth;
 
- FirebaseDBPort(dbElmSendPort, elmPort);
- FirebaseAuthPort(authElmSendPort, elmPort);
+ if (elmPortAuth && authElmSendPort) {
+   FirebaseAuthPort(authElmSendPort, elmPortAuth);
+ };
 
+ if (elmPortDB && dbElmSendPort) {
+  FirebaseDBPort(dbElmSendPort, elmPortDB);
+ };
 
 </script>
 

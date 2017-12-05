@@ -12,14 +12,14 @@ import Html.Styled as St
 
 import Empty as EmptyView
 import Customers as CustomersView
-import SignIn as SignInView
+import SignIn as SignInView exposing(Msg(FireAuth))
 import Msg exposing(Msg(..))
+-- i think importing SignIn's Child Module in Layout is a bad smell for isolation / encapsulation
 
+import Firebase.Auth as Auth -- see exposing in FirebaseAuth for how union type is exposed
 
 bannerConfig msg width =
     ({ defaultConfig | endBgColor = Css.Colors.maroon, skewColor = Css.Colors.gray, messageBorderColor = Css.Colors.silver, mainBgColor = Css.Colors.white, width = width, message = msg })
-
-
 
 
 userRibbonStyle =
@@ -33,8 +33,9 @@ userRibbon model =
         Just account ->
             div [ userRibbonStyle]
                 [ Ribbon.ribbon_left (bannerConfig ("Welcome "++ account.username) 500) |> St.toUnstyled
-                 , a [onClick SignOut] [text "Sign Out"]
+                , a [onClick (SignInPage (FireAuth (Auth.UI Auth.Logout)))] [text "Sign Out"]
                 ]
+                
         Nothing ->
             span [] []
 
@@ -144,7 +145,7 @@ view model =
             (Array.get model.selectedPageIndex tabViews |> Maybe.withDefault e404) model
     in
     div [ containerStyle ]
-        [ (sHeader (tabLinks model.accountModel) model.accountModel)
+        [ (sHeader (tabLinks model.signInModel.accountModel) model.signInModel.accountModel)
         ,  currentView
         ]
 
