@@ -24,7 +24,6 @@ let FirebaseAuthPort = function(firebaseAuthPort, elmPort) {
 
     let signInWithRedirect = function() {
         var provider = new firebase.auth.GithubAuthProvider();
-        provider.addScope('user');
         firebase.auth().signInWithRedirect(provider);
     };
 
