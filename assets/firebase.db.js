@@ -44,6 +44,12 @@ let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
       );
     });
   };
+  let deleteCustomer = function(customerId) {
+    var database = firebase.database();
+    database.ref().child("customers/" + customerId).remove().then(() => {
+      console.log("Deleted: " + customerId);
+    });
+  };
 
   let initalizeRealtimeCustomerUpdates = function() {
     var database = firebase.database();
@@ -65,6 +71,10 @@ let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
         break;
       case "Database/Customer/List":
         getCustomers();
+        break;
+      case "Database/Customer/Delete":
+        console.log("Please delete: ", msg[1]);
+        deleteCustomer(msg[1]);
         break;
       }
     });
