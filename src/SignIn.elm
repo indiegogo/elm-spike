@@ -1,11 +1,11 @@
-module SignIn exposing (view, update,Msg(..), Model, SessionState(..), initModel, subscriptions)
+module SignIn exposing (view, update, Msg(..), Model, SessionState(..), initModel, subscriptions)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Debug as D
-
 import Firebase.Auth as FireAuth exposing (Msg)
+
 
 type Msg
     = SignInMsg
@@ -16,11 +16,11 @@ type Msg
     | FireAuth FireAuth.Msg
 
 
-
 type SessionState
     = InValid
     | Verifying
     | Valid
+
 
 type alias Account =
     { username : String
@@ -35,7 +35,7 @@ type alias Model =
     , accountModel : Maybe Account
     }
 
-
+initModel: Model
 initModel =
     { username = ""
     , password = ""
@@ -44,7 +44,7 @@ initModel =
     , accountModel = Nothing
     }
 
-
+inputStyle: Attribute Msg
 inputStyle =
     style
         [ ( "font-size", "2em" )
@@ -53,7 +53,7 @@ inputStyle =
         , ( "border-radius", "8px" )
         ]
 
-
+buttonStyle: Attribute Msg
 buttonStyle =
     style
         [ ( "font-size", "2em" )
@@ -64,6 +64,7 @@ buttonStyle =
         ]
 
 
+signInStyle: Attribute Msg
 signInStyle =
     style
         [ ( "display", "flex" )
@@ -73,12 +74,14 @@ signInStyle =
         , ( "margin-top", "50px" )
         ]
 
+wrapperStyle: Attribute Msg
 wrapperStyle =
     style
         [ ( "min-width", "500px" )
         ]
 
 
+view : Model -> Html Msg
 view model =
     div [ signInStyle ]
         [ div [ wrapperStyle ]
@@ -99,19 +102,22 @@ view model =
                 []
             , button [ buttonStyle, (onClick SignUpMsg) ] [ text "Sign Up" ]
             ]
-        , div [wrapperStyle ]
-            [
-             Html.map FireAuth (FireAuth.view model.firebaseModel)
+        , div [ wrapperStyle ]
+            [ Html.map FireAuth (FireAuth.view model.firebaseModel)
             ]
         ]
 
 
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SignInMsg ->
-            ( { model | state = Valid
-              , accountModel = (Just (Account model.username))
-              }, Cmd.none )
+            ( { model
+                | state = Valid
+                , accountModel = (Just (Account model.username))
+              }
+            , Cmd.none
+            )
 
         SignUpMsg ->
             ( model, Cmd.none )
@@ -127,35 +133,43 @@ update msg model =
 
         FireAuth msg ->
             let
-                (result, cmd) =
+                ( result, cmd ) =
                     FireAuth.update msg model.firebaseModel
 
                 username =
                     case result.user of
-                           Just u ->
-                               u.email
-                           Nothing ->
-                               ""
+                        Just u ->
+                            u.email
+
+                        Nothing ->
+                            ""
+
                 state =
                     case FireAuth.authorized result of
                         True ->
                             Valid
+
                         False ->
                             InValid
 
-                accountModel = case state of
-                                   Valid ->
-                                       (Just (Account username))
-                                   _ ->
-                                       Nothing
-            in
-                ({model |
-                      firebaseModel = result
-                      , state = state
-                      , username = username
-                      , accountModel = accountModel
-                 }, Cmd.map FireAuth cmd)
+                accountModel =
+                    case state of
+                        Valid ->
+                            (Just (Account username))
 
+                        _ ->
+                            Nothing
+            in
+                ( { model
+                    | firebaseModel = result
+                    , state = state
+                    , username = username
+                    , accountModel = accountModel
+                  }
+                , Cmd.map FireAuth cmd
+                )
+
+
+subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.map FireAuth (FireAuth.subscriptions model)
-

@@ -6,6 +6,7 @@ port module Firebase.DB exposing
         , subscriptions
         , Msg(UI)
         , FirebaseMsg(CustomerList)
+        , FirebaseCustomer
         , Model
         )
 
