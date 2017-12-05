@@ -128,7 +128,9 @@ view model =
 
 
 subscriptions model =
-    Sub.none
+    Sub.batch [
+         Sub.map SignInPage (SignIn.subscriptions model)
+        ]
 
 
 delta2url : Model -> Model -> Maybe Routing.UrlChange

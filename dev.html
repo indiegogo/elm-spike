@@ -21,46 +21,26 @@
 
 <body>
 </body>
-<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
-<script>
-    // Initialize Firebase
-    var config = {
-        apiKey: "AIzaSyCpzjTw3OkgA8-eYit7kUUte8dNiITYXLA",
-        authDomain: "elm-spike.firebaseapp.com",
-        databaseURL: "https://elm-spike.firebaseio.com",
-        projectId: "elm-spike",
-        storageBucket: "elm-spike.appspot.com",
-        messagingSenderId: "799675640107"
-    };
-    firebase.initializeApp(config);
-
-    let signInWithRedirect = function() {
-        var provider = new firebase.auth.GithubAuthProvider();
-        provider.addScope('user');
-        firebase.auth().signInWithRedirect(provider);
-    }
-    let getRedirectResult = function() {
-        firebase.auth().getRedirectResult().then(function(result) {
-            console.log("getRedirectResult then")
-            console.log(result)
-
-            if (result.credential) {
-                // This gives you a GitHub Access Token. You can use it to access the GitHub API.
-                var token = result.credential.accessToken;
-                // ...
-            }
-            // The signed-in user info.
-            var user = result.user;
-        }).catch(function(error) {
-            console.log("getRedirectResult error")
-            console.log(error)
-        })
-    }
-</script>
 <script src="/_compile/src/Main.elm"></script>
 
+<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
+<script src="/assets/firebase.setup.js"></script>
+<script src="/assets/firebase.auth.js"></script>
+<script src="/assets/firebase.db.js"></script>
+
 <script>
-    Elm.Main.fullscreen();
+ var elm = Elm.Main.fullscreen();
+ console.log(elm.ports);
+
+ let elmPort = elm.ports.toFirebase;
+ let dbElmSendPort  = elm.ports.fromFirebaseDB;
+ let authElmSendPort = elm.ports.fromFirebaseAuth;
+
+ FirebaseDBPort(dbElmSendPort, elmPort);
+ FirebaseAuthPort(authElmSendPort, elmPort);
+
+
 </script>
+
 
 </html>

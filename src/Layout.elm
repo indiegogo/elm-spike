@@ -7,10 +7,8 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Ribbon exposing (defaultConfig)
-import Css
 import Css.Colors
 import Html.Styled as St
-import Html.Styled.Attributes as Sa
 
 import Empty as EmptyView
 import Customers as CustomersView
@@ -146,13 +144,13 @@ view model =
             (Array.get model.selectedPageIndex tabViews |> Maybe.withDefault e404) model
     in
     div [ containerStyle ]
-        [ (sHeader (tabLinks model) model.accountModel)
+        [ (sHeader (tabLinks model.accountModel) model.accountModel)
         ,  currentView
         ]
 
 tabSet =
     [
-     ( 0,"SignIn", "signIn", .accountModel >> SignInView.view >> Html.map SignInPage ) --0
+     ( 0,"SignIn", "signIn", .signInModel >> SignInView.view >> Html.map SignInPage ) --0
     , ( 1,"Customers", "cust",.customersModel >> CustomersView.view >> Html.map CustomersPage ) --1
     , ( 1,"Orders", "ord", .ordersModel >> EmptyView.view >> Html.map EmptyPage ) -- ...
     , ( 1,"Inventory", "inv", .inventoryModel >> EmptyView.view >> Html.map EmptyPage ) -- ...
@@ -174,7 +172,7 @@ tabUrls =
     List.map (\(_,_, u, _ ) -> u) tabSet |> Array.fromList
 
 tabLinks model =
-    case model.accountModel of
+    case model of
         Nothing ->
             []
         Just a ->

@@ -1,9 +1,11 @@
-module SignIn exposing (view, update,Msg, Model, SessionState(..), initModel)
+module SignIn exposing (view, update,Msg, Model, SessionState(..), initModel, subscriptions)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Debug as D
+
+import FirePort as Firebase 
 
 type Msg
     = SignInMsg
@@ -11,7 +13,7 @@ type Msg
     | SetUsername String
     | SetPassword String
     | SetPasswordConfirmation String
-
+    | Firebase Firebase.Msg
 
 
 
@@ -25,11 +27,16 @@ type alias Model =
     { username : String
     , password : String
     , state : SessionState
+    , firebaseModel : Firebase.Model
     }
 
 
 initModel =
-    Model "" "" InValid
+    { username = ""
+    , password = ""
+    , state = InValid
+    , firebaseModel = Firebase.initModel
+    }
 
 
 inputStyle =
@@ -60,7 +67,6 @@ signInStyle =
         , ( "margin-top", "50px" )
         ]
 
-
 wrapperStyle =
     style
         [ ( "min-width", "500px" )
@@ -87,6 +93,10 @@ view model =
                 []
             , button [ buttonStyle, (onClick SignUpMsg) ] [ text "Sign Up" ]
             ]
+        , div [wrapperStyle ]
+            [
+             Html.map Firebase (Firebase.view model.firebaseModel)
+            ]
         ]
 
 
@@ -106,3 +116,31 @@ update msg model =
 
         SetPasswordConfirmation str ->
             ( model, Cmd.none )
+
+        Firebase msg ->
+            let
+                (result, cmd) =
+                    Firebase.update msg model.firebaseModel
+
+                username =
+                    case result.user of
+                           Just u ->
+                               u.email
+                           Nothing ->
+                               ""
+                state =
+                    case Firebase.authorized result of
+                        True ->
+                            Valid
+                        False ->
+                            InValid
+            in
+                ({model |
+                      firebaseModel = result
+                      , state = state
+                      , username = username
+                 }, Cmd.map Firebase cmd)
+
+subscriptions model =
+    Sub.map Firebase (Firebase.subscriptions model)
+

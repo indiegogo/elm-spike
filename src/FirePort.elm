@@ -1,4 +1,15 @@
-port module FirePort exposing (main, initModel, update, view, subscriptions, Msg(..), Model)
+port module FirePort
+    exposing
+        ( main
+        , initModel
+        , update
+        , view
+        , subscriptions
+        , Msg(..)
+        , Model
+        , viewLoggedOut
+        , authorized
+        )
 
 --
 -- how elm ports work
@@ -11,6 +22,8 @@ import Json.Decode as Decode
 import Json.Encode
 import Json.Decode
 import Json.Decode.Pipeline as DecodePipeline
+
+
 -- elm-package install -- yes noredink/elm-decode-pipeline
 
 import Json.Decode.Pipeline
@@ -30,6 +43,7 @@ type FirebaseMsg
     | Logout
     | CreateCustomer Value
     | CustomerList
+
 
 type Msg
     = AuthFromFirebase (Maybe User)
@@ -53,10 +67,18 @@ type alias Model =
     { status : AuthStatus
     , user : Maybe User
     , dbMsg : String
-    , all   : List (FirebaseCustomer)
+    , all : List FirebaseCustomer
     }
 
+authorized: Model -> Bool
+authorized model =
+    case model.status of
+        Auth ->
+           True
+        _ ->
+           False
 
+main: Program Never Model Msg
 main =
     Html.program
         { init = init
@@ -69,9 +91,10 @@ main =
 initModel : Model
 initModel =
     { status = Verifying
-      , user = Nothing
-      , all = []
-      ,dbMsg = "" }
+    , user = Nothing
+    , all = []
+    , dbMsg = ""
+    }
 
 
 init =
@@ -114,26 +137,28 @@ viewLoggedIn model =
         , viewCustomers model.all
         ]
 
+
 viewCustomers list =
-    Html.ul []  
+    Html.ul []
         (List.map
-             (
-             \(customer) ->
-                 Html.li [] [
-                      Html.text customer.name
-                     ,Html.text customer.birthday
-                     ,Html.text customer.company
-                     ]
-             )
-             list
+            (\customer ->
+                Html.li []
+                    [ Html.text customer.name
+                    , Html.text customer.birthday
+                    , Html.text customer.company
+                    ]
+            )
+            list
         )
-        
+
+
 newCustomer =
     Encode.object
         [ ( "name", Encode.string "Detective Sam Spade" )
         , ( "birthday", Encode.string "11/02/1979" )
         , ( "company", Encode.string "Syntax Sugar Inc." )
         ]
+
 
 
 -- https://staltz.com/unidirectional-user-interface-architectures.html
@@ -160,10 +185,11 @@ update msg model =
             ( model, toFirebase ( "Trigger/Login", Nothing ) )
 
         FireBase Logout ->
-            ( model, toFirebase ( "Trigger/Logout", Nothing ) )
+            ( {model| status = NoAuth, user = Nothing }, toFirebase ( "Trigger/Logout", Nothing ) )
 
         FireBase CustomerList ->
             ( model, toFirebase ( "Database/Customer/List", Nothing ) )
+
         FireBase (CreateCustomer valueObject) ->
             ( model, toFirebase ( "Database/Customer/Create", Just valueObject ) )
 
@@ -210,9 +236,11 @@ type alias FirebaseCustomer =
     , id : String
     }
 
+
 decodeFirebaseCustomerList : Decode.Decoder (List FirebaseCustomer)
 decodeFirebaseCustomerList =
     Decode.list decodeFirebaseCustomer
+
 
 decodeFirebaseCustomer : Decode.Decoder FirebaseCustomer
 decodeFirebaseCustomer =
