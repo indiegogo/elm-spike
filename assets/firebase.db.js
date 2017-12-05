@@ -41,7 +41,6 @@ let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
     database.ref().child("customers").once("value").then((customers) => {
       console.log("get customers ok");
       let customersWithKey = flattenWithId(customers.val() || []);
-      console.log(customersWithKey)
       fromFirebaseDBPort.send(
         customersWithKey
       );
