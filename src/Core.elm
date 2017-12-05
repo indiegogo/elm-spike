@@ -8,7 +8,7 @@ import Msg exposing (Msg(..))
 
 import Layout
 import SignIn
-
+import Firebase.DB
 
 
 type alias CustomerModel =
@@ -28,6 +28,7 @@ type alias Model =
     , inventoryModel : EmptyModel
     , selectedPageIndex : Int
     , signInModel : SignIn.Model
+    , dbModel     : Firebase.DB.Model
     }
 
 
@@ -37,6 +38,7 @@ model =
     , inventoryModel = EmptyModel
     , selectedPageIndex = 0
     , signInModel = SignIn.initModel
+    , dbModel     = Firebase.DB.initModel
     }
 
 
@@ -109,6 +111,18 @@ update msg model =
 
             EmptyPage msg ->
                 ( model, Cmd.none )
+            FirebaseDBPage msg ->
+                let
+                    next =
+                        (Firebase.DB.update msg model.dbModel)
+
+                    dbModel =
+                        (Tuple.first next)
+
+                    cmd =
+                         Cmd.map FirebaseDBPage <| (Tuple.second next)
+                in
+                    ({model| dbModel = dbModel}, cmd)
 
 
 view model =
@@ -118,6 +132,7 @@ view model =
 subscriptions model =
     Sub.batch [
          Sub.map SignInPage (SignIn.subscriptions model)
+         ,Sub.map FirebaseDBPage (Firebase.DB.subscriptions model.dbModel)
         ]
 
 
