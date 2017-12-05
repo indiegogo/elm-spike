@@ -11,7 +11,29 @@
     -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
-    <title>Elm App</title>
+    <title> Elm-Spike </title>
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+    <link href="/assets/material.orange-light_blue.min.css" rel="stylesheet" />
+
+    <style type="text/css">
+        @import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro);
+        html,
+        head,
+        body {
+            margin: 0;
+            height: 100%;
+        }
+    </style>
+<!-- temporarily putting these here; elm gets injected automatically.
+TODO: see if we can use these via import -->
+    <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
+    <script src="/assets/firebase.setup.js"></script>
+    <script src="/assets/firebase.auth.js"></script>
+    <script src="/assets/firebase.db.js"></script>
+
+
 </head>
 <body>
     <noscript>
