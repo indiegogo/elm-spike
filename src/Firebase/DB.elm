@@ -4,7 +4,8 @@ port module Firebase.DB exposing
         , update
         , view
         , subscriptions
-        , Msg(..)
+        , Msg(UI)
+        , FirebaseMsg(CustomerList)
         , Model
         )
 
@@ -33,6 +34,7 @@ port fromFirebaseDB : (Value -> msg) -> Sub msg
 type FirebaseMsg
     = CreateCustomer Value
     | CustomerList
+    | DeleteCustomer Value
 
 
 type Msg
@@ -92,11 +94,15 @@ viewCustomers list =
                     [ Html.text customer.name
                     , Html.text customer.birthday
                     , Html.text customer.company
+                    , Html.button [ Html.Events.onClick (UI (DeleteCustomer (encodedCustomer customer))) ] [ Html.text "Delete" ]
                     ]
             )
             list
         )
 
+encodedCustomer: FirebaseCustomer -> Value
+encodedCustomer customer =
+    Encode.string customer.id
 
 newCustomer =
     Encode.object
@@ -123,6 +129,9 @@ update msg model =
 
         UI (CreateCustomer valueObject) ->
             ( model, toFirebaseDB ( "Database/Customer/Create", Just valueObject ) )
+        UI (DeleteCustomer customerId) ->
+            ( model, toFirebaseDB ( "Database/Customer/Delete", Just customerId ) )
+
 
 
 subscriptions _ =

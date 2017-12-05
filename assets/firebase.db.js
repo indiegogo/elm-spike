@@ -35,15 +35,21 @@ let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
       // let know failure
     });
   };
+
   let getCustomers = function() {
     var database = firebase.database();
     database.ref().child("customers").once("value").then((customers) => {
+      console.log("get customers ok");
       let customersWithKey = flattenWithId(customers.val() || []);
+      console.log(customersWithKey)
       fromFirebaseDBPort.send(
         customersWithKey
       );
+    }).catch(function(err){
+      console.log("get customers fail", err);
     });
   };
+
   let deleteCustomer = function(customerId) {
     var database = firebase.database();
     database.ref().child("customers/" + customerId).remove().then(() => {
