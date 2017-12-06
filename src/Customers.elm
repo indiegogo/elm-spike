@@ -59,6 +59,7 @@ contentStyle =
         , ( "width", "100%" )
         , ( "justify-content", "space-around" )
         , ( "align-items", "flex-start")
+        , ( "flex-flow", " row wrap ")
         ]
 
 view: Model -> Html Msg
