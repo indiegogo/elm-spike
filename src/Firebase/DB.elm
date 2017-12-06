@@ -184,6 +184,7 @@ mapRandomUserToFirebaseCustomer r=
     , company = "Random User"
     , name    = List.foldr (++) "" <| List.map (\s -> toCapital s) [r.name.title, " ", r.name.first, " ", r.name.last]
     , id      = sanitizeId <| r.id.name ++ ( Maybe.withDefault "" <| r.id.value )
+    , pictureUrl = r.picture.large
     }
 
 -- id for firebase must not contain
@@ -232,7 +233,9 @@ decodeFirebaseDBValue v =
 
 
 type alias FirebaseCustomer =
-    { birthday : String
+    {
+      pictureUrl : String
+    , birthday : String
     , company : String
     , name : String
     , id : String
@@ -247,6 +250,7 @@ decodeFirebaseCustomerList =
 decodeFirebaseCustomer : Decode.Decoder FirebaseCustomer
 decodeFirebaseCustomer =
     DecodePipeline.decode FirebaseCustomer
+        |> DecodePipeline.required "pictureUrl" (Decode.string)
         |> DecodePipeline.required "birthday" (Decode.string)
         |> DecodePipeline.required "company" (Decode.string)
         |> DecodePipeline.required "name" (Decode.string)
@@ -256,7 +260,9 @@ decodeFirebaseCustomer =
 encodeFirebaseCustomer : FirebaseCustomer -> Encode.Value
 encodeFirebaseCustomer record =
     Encode.object
-        [ ( "birthday", Encode.string <| record.birthday )
+        [
+          ( "pictureUrl", Encode.string <| record.pictureUrl )
+        , ( "birthday", Encode.string <| record.birthday )
         , ( "company", Encode.string <| record.company )
         , ( "name", Encode.string <| record.name )
         , ( "id", Encode.string <| record.id )

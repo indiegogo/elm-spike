@@ -33,13 +33,16 @@ margin1 : Options.Property a b
 margin1 =
     css "margin" "0"
 
-anMdlCard: String -> Html Msg
-anMdlCard name =
+cupcakeImg =
+    "https://2.bp.blogspot.com/-CAtiru0_Wgk/V7PgKQQ3e1I/AAAAAAAF85Y/KI-9G5903Gg7y_Wog47Ogib3f-Gc22kWwCLcB/s1600/cupcake-778704_960_720.png"
+
+anMdlCard: Firebase.DB.FirebaseCustomer -> Html Msg
+anMdlCard customer =
     Card.view
         [ css "width" "256px"
         , css "height" "256px"
         , css "padding" "5px"
-        , css "background" "url('https://2.bp.blogspot.com/-CAtiru0_Wgk/V7PgKQQ3e1I/AAAAAAAF85Y/KI-9G5903Gg7y_Wog47Ogib3f-Gc22kWwCLcB/s1600/cupcake-778704_960_720.png') center / cover"
+        , css "background" ("url('"++customer.pictureUrl++"') center / cover")
         , margin1
         ]
         [ Card.text [ Card.expand ] []
@@ -49,7 +52,7 @@ anMdlCard name =
             -- Non-gradient scrim
             [ Options.span
                 [ white, Typography.title, Typography.contrast 1.0 ]
-                [ text name ]
+                [ text customer.name ]
             ]
         ]
 
@@ -65,7 +68,7 @@ contentStyle =
 view: Model -> Html Msg
 view model =
     div [contentStyle]
-        ( List.map (\(l) ->  anMdlCard l.name) model.dbModel.all)
+        ( List.map (\(customer) ->  anMdlCard customer) model.dbModel.all)
 
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
