@@ -1,4 +1,4 @@
-module Customers exposing (view, Msg)
+module Customers exposing (Model, Msg, view, update, subscriptions, initModel)
 
 import Html exposing (Html, text, div)
 import Html.Attributes exposing(style)
@@ -7,8 +7,22 @@ import Material.Options as Options exposing (cs, css)
 import Material.Color as Color
 import Material.Typography as Typography
 
+import Firebase.DB
+import Debug as D exposing(log)
+
+type alias Model =
+    {
+        dbModel : Firebase.DB.Model
+    }
+
 type Msg =
-    Msg
+    CustomerDB Firebase.DB.Msg
+
+initModel: Model
+initModel =
+    {
+        dbModel = Firebase.DB.initModel
+    }
 
 white : Options.Property c m
 white =
@@ -16,9 +30,10 @@ white =
 
 
 margin1 : Options.Property a b
-margin1 = 
+margin1 =
     css "margin" "0"
 
+anMdlCard: String -> Html Msg
 anMdlCard name =
     Card.view
         [ css "width" "256px"
@@ -38,6 +53,7 @@ anMdlCard name =
             ]
         ]
 
+contentStyle: Html.Attribute Msg
 contentStyle =
     style [ ( "display", "flex" )
         , ( "width", "100%" )
@@ -45,10 +61,37 @@ contentStyle =
         , ( "align-items", "flex-start")
         ]
 
-
+view: Model -> Html Msg
 view model =
     div [contentStyle]
-        ( List.map (\(l) ->  anMdlCard l) model.list)
+        ( List.map (\(l) ->  anMdlCard l.name) model.dbModel.all)
 
+update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-    (model, Cmd.none)
+    let
+        a =
+            D.log "model" model
+
+        b =
+            D.log "msg" msg
+
+        c =
+            D.log "Customers.update" "Customers.update"
+    in
+        case msg of
+            CustomerDB msg ->
+                let
+                    next =
+                        (Firebase.DB.update msg model.dbModel)
+
+                    dbModel =
+                        (Tuple.first next)
+
+                    cmd =
+                         Cmd.map CustomerDB <| (Tuple.second next)
+                in
+                    ({model| dbModel = dbModel}, cmd)
+
+subscriptions: Model -> Sub Msg
+subscriptions m =
+   Sub.map CustomerDB (Firebase.DB.subscriptions m.dbModel)

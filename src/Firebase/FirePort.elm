@@ -43,6 +43,7 @@ type FirebaseMsg
     | Logout
     | CreateCustomer Value
     | CustomerList
+    | DeleteCustomer Value
 
 
 type Msg
@@ -146,6 +147,7 @@ viewCustomers list =
                     [ Html.text customer.name
                     , Html.text customer.birthday
                     , Html.text customer.company
+                    , Html.button [ Html.Events.onClick (FireBase (DeleteCustomer (encodedCustomer customer))) ] [ Html.text "Delete" ]
                     ]
             )
             list
@@ -159,7 +161,9 @@ newCustomer =
         , ( "company", Encode.string "Syntax Sugar Inc." )
         ]
 
-
+encodedCustomer: FirebaseCustomer -> Value
+encodedCustomer customer =
+    Encode.string customer.id
 
 -- https://staltz.com/unidirectional-user-interface-architectures.html
 
@@ -192,6 +196,9 @@ update msg model =
 
         FireBase (CreateCustomer valueObject) ->
             ( model, toFirebase ( "Database/Customer/Create", Just valueObject ) )
+
+        FireBase (DeleteCustomer customerId) ->
+            ( model, toFirebase ( "Database/Customer/Delete", Just customerId ) )
 
 
 subscriptions _ =
