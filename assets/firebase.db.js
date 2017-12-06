@@ -19,16 +19,31 @@ let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
     return customersWithKey;
   };
 
-  let customerCreate = function(user_ob) {
+  let importCustomers = function(list) {
+    for(let i in list) {
+      let c = list[i];
+       customerCreate(c, false); 
+    }
+    getCustomers();
+  }
+
+  let customerCreate = function(user_ob, get = false) {
+    
     var database = firebase.database();
-    var nextKey = database.ref().child("customers").push().key;
+    var nextKey = user_ob.id;
+    if (!nextKey) {
+      nextKey = database.ref().child("customers").push().key;
+    }
+
     let updates = {};
     updates["/customers/" + nextKey] = user_ob;
 
     database.ref().update(updates).then(function() {
       console.log("update success" + nextKey);
       // update customer list fresh (simple case)
-      getCustomers();
+      if (get) {
+        getCustomers();
+      }
     }).catch(function() {
       console.log("update fail" + nextKey);
       // getCustomers()
@@ -76,6 +91,10 @@ let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
         break;
       case "Database/Customer/List":
         getCustomers();
+        break;
+      case "Database/Import/Customers":
+        console.log("Import ", msg[1]);
+        importCustomers(msg[1]);
         break;
       case "Database/Customer/Delete":
         console.log("Please delete: ", msg[1]);

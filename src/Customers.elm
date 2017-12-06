@@ -94,4 +94,4 @@ update msg model =
 
 subscriptions: Model -> Sub Msg
 subscriptions m =
-   Sub.map CustomerDB (Firebase.DB.subscriptions m)
+   Sub.map CustomerDB (Firebase.DB.subscriptions m.dbModel)

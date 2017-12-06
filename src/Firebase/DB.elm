@@ -8,6 +8,8 @@ port module Firebase.DB exposing
         , FirebaseMsg(CustomerList)
         , FirebaseCustomer
         , Model
+        , sanitizeId
+        , sanitizeList
         )
 
 --
@@ -22,10 +24,11 @@ import Json.Encode
 import Json.Decode
 import Json.Decode.Pipeline as DecodePipeline
 
+import Http
 -- elm-package install -- yes noredink/elm-decode-pipeline
 
 import Json.Decode.Pipeline
-
+import RandomUser
 
 port toFirebaseDB : ( String, Maybe Value ) -> Cmd msg
 
@@ -36,12 +39,14 @@ type FirebaseMsg
     = CreateCustomer Value
     | CustomerList
     | DeleteCustomer Value
+    | FetchRandomCustomers
 
 
 type Msg
     =  FirebaseCustomerList (List FirebaseCustomer)
     | FirebaseErrorMessage String
     | UI FirebaseMsg
+    | RandomUsersMeResponse (Result Http.Error RandomUser.RandomUserMe)
 
 
 
@@ -70,23 +75,25 @@ initModel =
     , dbMsg = ""
     }
 
-
+init: (Model, Cmd Msg)
 init =
     ( initModel, Cmd.none )
 
-
+view: Model -> Html.Html Msg
 view model =
     Html.div []
         [
-         Html.button [ Html.Events.onClick (UI (CreateCustomer newCustomer)) ] [ Html.text "Create User" ]
+         Html.button [ Html.Events.onClick (UI FetchRandomCustomers) ] [ Html.text "Import Customers from RandomUser.me" ]
+        ,Html.button [ Html.Events.onClick (UI (CreateCustomer newCustomer)) ] [ Html.text "Create Customer" ]
         , viewDbMsg model
         , viewCustomers model.all
         ]
 
+viewDbMsg: Model -> Html.Html Msg
 viewDbMsg model =
     Html.div [] [ Html.text "Last DB Message ", Html.text model.dbMsg ]
 
-
+viewCustomers: List (FirebaseCustomer) -> Html.Html Msg
 viewCustomers list =
     Html.ul []
         (List.map
@@ -104,7 +111,7 @@ viewCustomers list =
 encodedCustomer: FirebaseCustomer -> Value
 encodedCustomer customer =
     Encode.string customer.id
-
+newCustomer: Value
 newCustomer =
     Encode.object
         [ ( "name", Encode.string "Detective Sam Spade" )
@@ -117,9 +124,34 @@ newCustomer =
 -- https://staltz.com/unidirectional-user-interface-architectures.html
 
 
-update : Msg -> Model -> ( Model, Cmd msg )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        RandomUsersMeResponse randomUserMe ->
+            let
+                a = Debug.log "Random User Me Response" randomUserMe
+                firebaseCustomerList  randomUser =
+                    encodeFirebaseCustomerList <| randomUserMeToCustomers randomUser
+            in
+            case randomUserMe of
+                Ok randomUser ->
+                    let
+                      b = Debug.log "firebaseCustomerList" (firebaseCustomerList randomUser)
+                    in
+                    (model, toFirebaseDB ("Database/Import/Customers", Just <| firebaseCustomerList randomUser) )
+                Err httpError ->
+                    case httpError of
+                        Http.BadUrl a ->
+                            ( { model | dbMsg = a}, Cmd.none )
+                        Http.Timeout ->
+                            ( { model | dbMsg = "Timeout"}, Cmd.none )
+                        Http.NetworkError ->
+                            ( { model | dbMsg = "NetworkError"}, Cmd.none )
+                        Http.BadStatus a ->
+                            ( { model | dbMsg = (toString a)}, Cmd.none )
+                        Http.BadPayload a b ->
+                            ( { model | dbMsg = (a ++":"++(toString b))}, Cmd.none )
+
         FirebaseCustomerList all ->
             ( { model | all = all }, Cmd.none )
 
@@ -132,13 +164,57 @@ update msg model =
             ( model, toFirebaseDB ( "Database/Customer/Create", Just valueObject ) )
         UI (DeleteCustomer customerId) ->
             ( model, toFirebaseDB ( "Database/Customer/Delete", Just customerId ) )
+        UI (FetchRandomCustomers) ->
+            (model, importFromRandomUserMe )
 
 
+importFromRandomUserMe: Cmd Msg
+importFromRandomUserMe =
+    Http.send RandomUsersMeResponse (Http.get "https://randomuser.me/api/?results=5" RandomUser.decodeRandomUserMe)
 
+randomUserMeToCustomers: RandomUser.RandomUserMe -> List (FirebaseCustomer)
+randomUserMeToCustomers list =
+    List.map
+        (\randomUser ->  mapRandomUserToFirebaseCustomer randomUser )
+         list.results
+
+mapRandomUserToFirebaseCustomer: RandomUser.RandomUser -> FirebaseCustomer
+mapRandomUserToFirebaseCustomer r=
+    { birthday = r.dob
+    , company = "Random User"
+    , name    = List.foldr (++) "" <| List.map (\s -> toCapital s) [r.name.title, " ", r.name.first, " ", r.name.last]
+    , id      = sanitizeId <| r.id.name ++ ( Maybe.withDefault "" <| r.id.value )
+    }
+
+-- id for firebase must not contain
+-- ".", "#", "$", "/", "[", or "]"
+sanitizeList : List (String)
+sanitizeList=
+    [".","#","$","/","[","]"]
+
+sanitizeId: String -> String
+sanitizeId idForFirebase =
+    String.map
+        (\char->
+           case (List.member (String.fromChar char) sanitizeList) of
+             True ->
+                '-'
+             _ ->
+                 char
+        )
+        idForFirebase
+
+-- https://github.com/rainteller/elm-capitalize/blob/master/Capitalize.elm
+toCapital : String -> String
+toCapital str =
+    String.toUpper(String.left 1 str) ++ String.dropLeft 1 str
+
+subscriptions: Model -> Sub Msg
 subscriptions _ =
     fromFirebaseDB (decodeFirebaseDBValue)
 
 
+decodeFirebaseDBValue: Value -> Msg
 decodeFirebaseDBValue v =
     let
         result =
@@ -186,3 +262,6 @@ encodeFirebaseCustomer record =
         , ( "id", Encode.string <| record.id )
         ]
 
+encodeFirebaseCustomerList : List (FirebaseCustomer) -> Encode.Value
+encodeFirebaseCustomerList customers =
+    Encode.list <| List.map encodeFirebaseCustomer <| customers
