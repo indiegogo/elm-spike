@@ -16,6 +16,7 @@ port module Firebase.DB exposing
 -- how elm ports work
 -- https://hackernoon.com/how-elm-ports-work-with-a-picture-just-one-25144ba43cdd
 
+import Style exposing(buttonStyle)
 import Html
 import Html.Events
 import Json.Encode as Encode exposing (Value)
@@ -83,8 +84,8 @@ view: Model -> Html.Html Msg
 view model =
     Html.div []
         [
-         Html.button [ Html.Events.onClick (UI FetchRandomCustomers) ] [ Html.text "Import Customers from RandomUser.me" ]
-        ,Html.button [ Html.Events.onClick (UI (CreateCustomer newCustomer)) ] [ Html.text "Create Customer" ]
+         Html.button [buttonStyle, Html.Events.onClick (UI FetchRandomCustomers) ] [ Html.text "Import Customers from RandomUser.me" ]
+        ,Html.button [buttonStyle, Html.Events.onClick (UI (CreateCustomer newCustomer)) ] [ Html.text "Create Customer" ]
         , viewDbMsg model
         , viewCustomers model.all
         ]
@@ -111,12 +112,17 @@ viewCustomers list =
 encodedCustomer: FirebaseCustomer -> Value
 encodedCustomer customer =
     Encode.string customer.id
+
+cupcakeImg =
+    "https://2.bp.blogspot.com/-CAtiru0_Wgk/V7PgKQQ3e1I/AAAAAAAF85Y/KI-9G5903Gg7y_Wog47Ogib3f-Gc22kWwCLcB/s1600/cupcake-778704_960_720.png"
+
 newCustomer: Value
 newCustomer =
     Encode.object
         [ ( "name", Encode.string "Detective Sam Spade" )
         , ( "birthday", Encode.string "11/02/1979" )
         , ( "company", Encode.string "Syntax Sugar Inc." )
+        , ( "pictureUrl", Encode.string cupcakeImg)
         ]
 
 
@@ -184,6 +190,7 @@ mapRandomUserToFirebaseCustomer r=
     , company = "Random User"
     , name    = List.foldr (++) "" <| List.map (\s -> toCapital s) [r.name.title, " ", r.name.first, " ", r.name.last]
     , id      = sanitizeId <| r.id.name ++ ( Maybe.withDefault "" <| r.id.value )
+    , pictureUrl = r.picture.large
     }
 
 -- id for firebase must not contain
@@ -232,7 +239,9 @@ decodeFirebaseDBValue v =
 
 
 type alias FirebaseCustomer =
-    { birthday : String
+    {
+      pictureUrl : String
+    , birthday : String
     , company : String
     , name : String
     , id : String
@@ -247,6 +256,7 @@ decodeFirebaseCustomerList =
 decodeFirebaseCustomer : Decode.Decoder FirebaseCustomer
 decodeFirebaseCustomer =
     DecodePipeline.decode FirebaseCustomer
+        |> DecodePipeline.required "pictureUrl" (Decode.string)
         |> DecodePipeline.required "birthday" (Decode.string)
         |> DecodePipeline.required "company" (Decode.string)
         |> DecodePipeline.required "name" (Decode.string)
@@ -256,7 +266,9 @@ decodeFirebaseCustomer =
 encodeFirebaseCustomer : FirebaseCustomer -> Encode.Value
 encodeFirebaseCustomer record =
     Encode.object
-        [ ( "birthday", Encode.string <| record.birthday )
+        [
+          ( "pictureUrl", Encode.string <| record.pictureUrl )
+        , ( "birthday", Encode.string <| record.birthday )
         , ( "company", Encode.string <| record.company )
         , ( "name", Encode.string <| record.name )
         , ( "id", Encode.string <| record.id )

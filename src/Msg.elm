@@ -4,6 +4,7 @@ import Empty exposing (Msg)
 import Customers exposing (Msg)
 import SignIn exposing (Msg)
 import Firebase.DB exposing(Msg)
+import Firebase.Auth exposing(Model)
 
 type Msg
     = SelectPage Int

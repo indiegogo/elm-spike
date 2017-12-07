@@ -15,6 +15,8 @@ COPY public/ public/
 COPY assets/ public/assets/
 COPY src/ src/
 RUN elm-make  src/Main.elm --output public/assets/elm.js
+COPY scripts/ scripts/
+RUN ./scripts/closure.sh < public/assets/elm.js > public/assets/elm.min.js
 
 RUN tar zcf build.tar.gz public
 
