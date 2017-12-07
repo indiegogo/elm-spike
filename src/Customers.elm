@@ -33,8 +33,6 @@ margin1 : Options.Property a b
 margin1 =
     css "margin" "0"
 
-cupcakeImg =
-    "https://2.bp.blogspot.com/-CAtiru0_Wgk/V7PgKQQ3e1I/AAAAAAAF85Y/KI-9G5903Gg7y_Wog47Ogib3f-Gc22kWwCLcB/s1600/cupcake-778704_960_720.png"
 
 anMdlCard: Firebase.DB.FirebaseCustomer -> Html Msg
 anMdlCard customer =

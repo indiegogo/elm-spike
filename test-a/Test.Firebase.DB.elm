@@ -1,4 +1,4 @@
-module Tests exposing (main)
+module Test.Firebase.DB exposing (main)
 import Test exposing (describe, test)
 import Test.Runner.Html exposing (run)
 

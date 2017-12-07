@@ -111,12 +111,17 @@ viewCustomers list =
 encodedCustomer: FirebaseCustomer -> Value
 encodedCustomer customer =
     Encode.string customer.id
+
+cupcakeImg =
+    "https://2.bp.blogspot.com/-CAtiru0_Wgk/V7PgKQQ3e1I/AAAAAAAF85Y/KI-9G5903Gg7y_Wog47Ogib3f-Gc22kWwCLcB/s1600/cupcake-778704_960_720.png"
+
 newCustomer: Value
 newCustomer =
     Encode.object
         [ ( "name", Encode.string "Detective Sam Spade" )
         , ( "birthday", Encode.string "11/02/1979" )
         , ( "company", Encode.string "Syntax Sugar Inc." )
+        , ( "pictureUrl", Encode.string cupcakeImg)
         ]
 
 

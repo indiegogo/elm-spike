@@ -1,4 +1,4 @@
-module SignIn exposing (view, update, Msg(..), Model, SessionState(..), initModel, subscriptions)
+module SignIn exposing (view, update, Msg(..), Model, SessionState(..), initModel, subscriptions, Account)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
