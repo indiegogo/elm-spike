@@ -157,10 +157,10 @@ e404 _ =
 view model =
     let
         currentView =
-            (Array.get model.selectedPageIndex tabViews |> Maybe.withDefault e404) model
+            (Array.get model.session.pageIndex tabViews |> Maybe.withDefault e404) model
     in
         div [ containerStyle ]
-            [ (sHeader (tabLinks model.signInModel.accountModel) model.signInModel.accountModel)
+            [ (sHeader (tabLinks model.session.account) model.session.account)
             , currentView
             ]
 
@@ -205,4 +205,4 @@ tabLinks model =
 
 
 urlOf model =
-    "#" ++ (Array.get model.selectedPageIndex tabUrls |> Maybe.withDefault "")
+    "#" ++ (Array.get model.session.pageIndex tabUrls |> Maybe.withDefault "")

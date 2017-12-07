@@ -5,6 +5,7 @@ port module Firebase.Auth
         , update
         , view
         , subscriptions
+        , AuthStatus(..)
         , Msg(UI)
         , FirebaseMsg(Logout) -- https://github.com/elm-lang/elm-lang.org/issues/523
         , Model
@@ -21,12 +22,7 @@ import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode
 import Json.Encode
 import Json.Decode
-import Json.Decode.Pipeline as DecodePipeline
 
-
--- elm-package install -- yes noredink/elm-decode-pipeline
-
-import Json.Decode.Pipeline
 
 
 port toFirebaseAuth : ( String, Maybe Value ) -> Cmd msg
@@ -83,7 +79,7 @@ main =
 
 initModel : Model
 initModel =
-    { status = Verifying
+    { status = NoAuth -- Verifying -> NoAuth | Auth
     , user = Nothing
     }
 
@@ -137,11 +133,11 @@ update msg model =
                     ({ model | user = maybeUser, status = Auth }, Cmd.none)
 
         UI Login ->
-            ( model, toFirebaseAuth ( "Trigger/Login", Nothing ) )
+            ( {model| status = Verifying}, toFirebaseAuth ( "Trigger/Login", Nothing ) )
 
         UI Logout ->
             ( { model | status = NoAuth, user = Nothing }, toFirebaseAuth ( "Trigger/Logout", Nothing ) )
-
+        
 
 subscriptions _ =
     fromFirebaseAuth (decodeFirebaseValue)
