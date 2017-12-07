@@ -89,8 +89,11 @@ update msg model =
                     newModel =
                         case externalMsg of
                             SignIn.EstablishSession firebaseModel ->
-                                { model | session = Session.fromFirebaseAuth firebaseModel }
-
+                                { model
+                                    | session = Session.fromFirebaseAuth firebaseModel
+                                    , signInModel = signInModel
+                                }
+                                
                             SignIn.NoOp ->
                                 { model | signInModel = signInModel }
                 in

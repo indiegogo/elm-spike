@@ -79,7 +79,7 @@ main =
 
 initModel : Model
 initModel =
-    { status = NoAuth -- Verifying -> NoAuth | Auth
+    { status = Verifying -- Verifying -> NoAuth | Auth
     , user = Nothing
     }
 
@@ -133,7 +133,7 @@ update msg model =
                     ({ model | user = maybeUser, status = Auth }, Cmd.none)
 
         UI Login ->
-            ( {model| status = Verifying}, toFirebaseAuth ( "Trigger/Login", Nothing ) )
+            ( model , toFirebaseAuth ( "Trigger/Login", Nothing ) )
 
         UI Logout ->
             ( { model | status = NoAuth, user = Nothing }, toFirebaseAuth ( "Trigger/Logout", Nothing ) )
