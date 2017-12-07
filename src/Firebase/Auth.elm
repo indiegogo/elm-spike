@@ -16,14 +16,13 @@ port module Firebase.Auth
 -- how elm ports work
 -- https://hackernoon.com/how-elm-ports-work-with-a-picture-just-one-25144ba43cdd
 
+import Style exposing(buttonStyle)
 import Html
 import Html.Events
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode
 import Json.Encode
 import Json.Decode
-
-
 
 port toFirebaseAuth : ( String, Maybe Value ) -> Cmd msg
 
@@ -103,17 +102,18 @@ view model =
 viewVerifying =
     Html.div [] [ Html.text "..initializing auth provider" ]
 
+   
 
 viewLoggedOut model =
     Html.div []
-        [ Html.button [ Html.Events.onClick (UI Login) ] [ Html.text "Trigger Login Flow with Firebase" ]
+        [ Html.button [buttonStyle, Html.Events.onClick (UI Login) ] [ Html.text "Trigger Login Flow with Firebase" ]
         ]
 
 
 viewLoggedIn model =
     Html.div []
         [ Html.div [] [ Html.text "Current User is ", Html.text (.user >> toString <| model) ]
-        , Html.button [ Html.Events.onClick (UI Logout) ] [ Html.text "Logout" ]
+        , Html.button [ buttonStyle, Html.Events.onClick (UI Logout) ] [ Html.text "Logout" ]
         ]
 
 

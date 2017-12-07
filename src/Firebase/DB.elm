@@ -16,6 +16,7 @@ port module Firebase.DB exposing
 -- how elm ports work
 -- https://hackernoon.com/how-elm-ports-work-with-a-picture-just-one-25144ba43cdd
 
+import Style exposing(buttonStyle)
 import Html
 import Html.Events
 import Json.Encode as Encode exposing (Value)
@@ -83,8 +84,8 @@ view: Model -> Html.Html Msg
 view model =
     Html.div []
         [
-         Html.button [ Html.Events.onClick (UI FetchRandomCustomers) ] [ Html.text "Import Customers from RandomUser.me" ]
-        ,Html.button [ Html.Events.onClick (UI (CreateCustomer newCustomer)) ] [ Html.text "Create Customer" ]
+         Html.button [buttonStyle, Html.Events.onClick (UI FetchRandomCustomers) ] [ Html.text "Import Customers from RandomUser.me" ]
+        ,Html.button [buttonStyle, Html.Events.onClick (UI (CreateCustomer newCustomer)) ] [ Html.text "Create Customer" ]
         , viewDbMsg model
         , viewCustomers model.all
         ]

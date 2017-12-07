@@ -3,8 +3,7 @@ module SignIn exposing (view, update,Msg(..), Model, initModel, subscriptions, E
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Debug as D
-
+import Style exposing(..)
 import Firebase.Auth as FireAuth exposing (Msg)
 
 type Msg
@@ -41,26 +40,6 @@ initModel =
     , firebaseModel = FireAuth.initModel
     }
 
-
-inputStyle =
-    style
-        [ ( "font-size", "2em" )
-        , ( "margin-top", "1em" )
-        , ( "padding", "5px" )
-        , ( "border-radius", "8px" )
-        ]
-
-
-buttonStyle =
-    style
-        [ ( "font-size", "2em" )
-        , ( "margin-top", "1em" )
-        , ( "padding", "5px" )
-        , ( "margin-left", "10px" )
-        , ( "border-radius", "8px" )
-        ]
-
-
 signInStyle =
     style
         [ ( "display", "flex" )
@@ -68,11 +47,6 @@ signInStyle =
         , ( "align-items", "center" )
         , ( "flex-direction", "column" )
         , ( "margin-top", "50px" )
-        ]
-
-wrapperStyle =
-    style
-        [ ( "min-width", "500px" )
         ]
 
 
