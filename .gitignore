@@ -3,4 +3,5 @@
 .\#*
 assets/elm.js
 build
+build
 closure-compiler
