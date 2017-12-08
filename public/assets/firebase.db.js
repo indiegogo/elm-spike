@@ -34,7 +34,7 @@ let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
     if (!nextKey) {
       nextKey = database.ref().child("customers").push().key;
     }
-
+    
     let updates = {};
     updates["/customers/" + nextKey] = user_ob;
 
