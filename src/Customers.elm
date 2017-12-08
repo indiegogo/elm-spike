@@ -50,7 +50,7 @@ anMdlCard customer =
             -- Non-gradient scrim
             [ Options.span
                 [ white, Typography.title, Typography.contrast 1.0 ]
-                [ text customer.name ]
+                [ text customer.fullname ]
             ]
         ]
 
