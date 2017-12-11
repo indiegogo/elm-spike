@@ -1,5 +1,8 @@
 module Core exposing (Model, update, view, init, subscriptions, location2messages, delta2url)
 
+{-|
+-}
+
 import Debug as D exposing (log)
 import RouteUrl as Routing
 import Navigation
