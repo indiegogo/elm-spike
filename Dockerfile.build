@@ -12,6 +12,5 @@ RUN cat /app/elm-package.json
 COPY public/ public/
 COPY src/ src/
 RUN elm-app build
-RUN mv build public
-RUN tar zcf build.tar.gz public
+RUN tar zcf build.tar.gz build
 
