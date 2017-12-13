@@ -3,3 +3,5 @@
 .\#*
 assets/elm.js
 build
+node_models
+dist
