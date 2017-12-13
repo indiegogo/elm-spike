@@ -25,8 +25,6 @@ import Json.Encode
 import Json.Decode
 
 port toFirebaseAuth : ( String, Maybe Value ) -> Cmd msg
-
-
 port fromFirebaseAuth : (Value -> msg) -> Sub msg
 
 

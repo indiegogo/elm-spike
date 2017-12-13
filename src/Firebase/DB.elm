@@ -87,7 +87,8 @@ view : Model -> Html.Html Msg
 view model =
     Html.div []
         [
-         Html.input [ (Html.Events.onInput UpdateImportAmount), Html.Attributes.value model.importAmount ] []
+         Html.text <| "Customers " ++ (toString <| List.length model.all)
+        , Html.input [ (Html.Events.onInput UpdateImportAmount), Html.Attributes.value model.importAmount ] []
         , Html.button [ buttonStyle, Html.Events.onClick (UI FetchRandomCustomers) ] [ Html.text "Import Customers from RandomUser.me" ]
         , viewDbMsg model
         , viewCustomers model.all

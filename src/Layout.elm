@@ -157,7 +157,7 @@ e404 _ =
 view model =
     let
         currentView =
-            (Array.get model.session.pageIndex tabViews |> Maybe.withDefault e404) model
+            (Array.get (.pageIndex (.session model)) tabViews |> Maybe.withDefault e404) model
     in
         div [ containerStyle ]
             [ (sHeader (tabLinks model.session.account) model.session.account)
@@ -175,7 +175,9 @@ tabSet =
 
 
 tabViews =
-    List.map (\( _, _, _, v ) -> v) tabSet |> Array.fromList
+  (Array.fromList
+    (List.map (\( _, _, _, v ) -> v) tabSet)
+   )
 
 
 tabNames =
