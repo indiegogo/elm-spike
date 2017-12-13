@@ -6,8 +6,7 @@
 //
 //
 // globals: firebase
-(function() {
-  function initializeFirebase() {
+  export function SetupFirebase(firebase) {
     var config = {
       apiKey: "AIzaSyCpzjTw3OkgA8-eYit7kUUte8dNiITYXLA",
       authDomain: "elm-spike.firebaseapp.com",
@@ -18,5 +17,3 @@
     };
     firebase.initializeApp(config);
   }
-  initializeFirebase();
-}());

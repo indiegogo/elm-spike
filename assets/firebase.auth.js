@@ -8,9 +8,9 @@
 // <script src="/assets/firebase.setup.js"></script>
 /* global: firebase */
 
-let FirebaseAuthPort = function(firebaseAuthPort, elmPort) {
+export function FirebaseAuthPort(firebase, firebaseAuthPort, elmPort) {
 
-    let initializeAuthStateChanged = function() {
+    const initializeAuthStateChanged = function() {
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
                 console.log("OnAuthStateChange Fired :", user);
@@ -22,12 +22,12 @@ let FirebaseAuthPort = function(firebaseAuthPort, elmPort) {
         });
     };
 
-    let signInWithRedirect = function() {
+    const signInWithRedirect = function() {
         var provider = new firebase.auth.GithubAuthProvider();
         firebase.auth().signInWithRedirect(provider);
     };
 
-    let signOut = function() {
+    const signOut = function() {
         firebase.auth().signOut().then(function(thing) {
             console.log("signout says success ", thing);
         }).catch(function(error) {
@@ -36,7 +36,7 @@ let FirebaseAuthPort = function(firebaseAuthPort, elmPort) {
         firebaseAuthPort.send(null);
     };
 
-    let initializeElmSubscripton = function() {
+    const initializeElmSubscripton = function() {
         elmPort.subscribe(function(msg) {
             console.log("AUTH :: Chomp Chomp .. got a message from Elm :: ", msg);
             switch (msg[0]) {

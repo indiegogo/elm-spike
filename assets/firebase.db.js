@@ -8,7 +8,7 @@
 // <script src="/assets/firebase.setup.js"></script>
 // globals: firebase
 
-let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
+export function FirebaseDBPort(firebase, fromFirebaseDBPort, elmPort) {
   let flattenWithId = function(thing) {
     let customersWithKey = [];
     for (let member in thing) {

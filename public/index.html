@@ -3,7 +3,7 @@
 
 <head>
     <title> Elm-Spike </title>
-
+    <script src="bundle.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 
     <link href="/assets/material.orange-light_blue.min.css" rel="stylesheet" />
@@ -18,36 +18,6 @@
         }
     </style>
 </head>
-
 <body>
 </body>
-<!--  <script src="/assets/elm.js"></script> -->
-<script src="/assets/elm-closure.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
-<script src="/assets/firebase.setup.js"></script>
-<script src="/assets/firebase.auth.js"></script>
-<script src="/assets/firebase.db.js"></script>
-
-<script>
- var elm = Elm.Main.fullscreen();
- console.log(elm.ports);
-
- let elmPortAuth = elm.ports.toFirebaseAuth;
- let elmPortDB = elm.ports.toFirebaseDB;
-
- let dbElmSendPort  = elm.ports.fromFirebaseDB;
- let authElmSendPort = elm.ports.fromFirebaseAuth;
-
- if (elmPortAuth && authElmSendPort) {
-   FirebaseAuthPort(authElmSendPort, elmPortAuth);
- };
-
- if (elmPortDB && dbElmSendPort) {
-  FirebaseDBPort(dbElmSendPort, elmPortDB);
- };
-
-</script>
-
-
 </html>
