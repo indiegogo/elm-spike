@@ -1,13 +1,16 @@
 module Empty exposing (view, Msg)
 
-import Html exposing (Html, text, div)
+import Html exposing (text, div)
 import Material
 
-type Msg =
-    Mdl (Material.Msg Msg)
+
+type Msg
+    = Mdl (Material.Msg Msg)
+
 
 update msg model =
-    (model, Cmd.none)
+    ( model, Cmd.none )
+
 
 view model =
-    div [] [ text "Empty Page"]
+    div [] [ text "Empty Page" ]

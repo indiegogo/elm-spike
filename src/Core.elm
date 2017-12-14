@@ -3,13 +3,13 @@ module Core exposing (Model, update, view, init, subscriptions, location2message
 {-|
 -}
 
-import Debug as D exposing (log)
+import Debug as D
 import RouteUrl as Routing
 import Navigation
 import Dict
 import Msg exposing (Msg(..))
 import Layout
-import SignIn exposing (ExternalMsg)
+import SignIn
 import Session
 import Firebase.DB
 import CustomersGrid
@@ -79,7 +79,7 @@ update msg model =
         case msg of
             SelectPage idx ->
                 ( { model
-                    | session = (Session.setPageIndex model.session idx)
+                    | session = Session.setPageIndex model.session idx
                   }
                 , Cmd.none
                 )
@@ -96,7 +96,7 @@ update msg model =
                                     | session = Session.fromFirebaseAuth firebaseModel
                                     , signInModel = signInModel
                                 }
-                                
+
                             SignIn.NoOp ->
                                 { model | signInModel = signInModel }
                 in
@@ -105,13 +105,13 @@ update msg model =
             CustomersPage msg ->
                 let
                     next =
-                        (CustomersGrid.update msg model.customersModel)
+                        CustomersGrid.update msg model.customersModel
 
                     customersModel =
-                        (Tuple.first next)
+                        Tuple.first next
 
                     cmd =
-                        Cmd.map CustomersPage <| (Tuple.second next)
+                        Cmd.map CustomersPage <| Tuple.second next
                 in
                     ( { model | customersModel = customersModel }, cmd )
 
@@ -121,13 +121,13 @@ update msg model =
             FirebaseDBPage msg ->
                 let
                     next =
-                        (Firebase.DB.update msg model.dbModel)
+                        Firebase.DB.update msg model.dbModel
 
                     dbModel =
-                        (Tuple.first next)
+                        Tuple.first next
 
                     cmd =
-                        Cmd.map FirebaseDBPage <| (Tuple.second next)
+                        Cmd.map FirebaseDBPage <| Tuple.second next
                 in
                     ( { model | dbModel = dbModel }, cmd )
 

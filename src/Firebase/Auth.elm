@@ -7,7 +7,8 @@ port module Firebase.Auth
         , subscriptions
         , AuthStatus(..)
         , Msg(UI)
-        , FirebaseMsg(Logout) -- https://github.com/elm-lang/elm-lang.org/issues/523
+        , FirebaseMsg(Logout)
+          -- https://github.com/elm-lang/elm-lang.org/issues/523
         , Model
         , authorized
         )
@@ -16,7 +17,7 @@ port module Firebase.Auth
 -- how elm ports work
 -- https://hackernoon.com/how-elm-ports-work-with-a-picture-just-one-25144ba43cdd
 
-import Style exposing(buttonStyle)
+import Style exposing (buttonStyle)
 import Html
 import Html.Events
 import Json.Encode as Encode exposing (Value)
@@ -24,7 +25,10 @@ import Json.Decode as Decode
 import Json.Encode
 import Json.Decode
 
+
 port toFirebaseAuth : ( String, Maybe Value ) -> Cmd msg
+
+
 port fromFirebaseAuth : (Value -> msg) -> Sub msg
 
 
@@ -76,7 +80,9 @@ main =
 
 initModel : Model
 initModel =
-    { status = Verifying -- Verifying -> NoAuth | Auth
+    { status =
+        Verifying
+        -- Verifying -> NoAuth | Auth
     , user = Nothing
     }
 
@@ -100,11 +106,10 @@ view model =
 viewVerifying =
     Html.div [] [ Html.text "..initializing auth provider" ]
 
-   
 
 viewLoggedOut model =
     Html.div []
-        [ Html.button [buttonStyle, Html.Events.onClick (UI Login) ] [ Html.text "Trigger Login Flow with Firebase" ]
+        [ Html.button [ buttonStyle, Html.Events.onClick (UI Login) ] [ Html.text "Trigger Login Flow with Firebase" ]
         ]
 
 
@@ -128,17 +133,17 @@ update msg model =
                     ( { model | status = NoAuth, user = Nothing }, Cmd.none )
 
                 Just _ ->
-                    ({ model | user = maybeUser, status = Auth }, Cmd.none)
+                    ( { model | user = maybeUser, status = Auth }, Cmd.none )
 
         UI Login ->
-            ( model , toFirebaseAuth ( "Trigger/Login", Nothing ) )
+            ( model, toFirebaseAuth ( "Trigger/Login", Nothing ) )
 
         UI Logout ->
             ( { model | status = NoAuth, user = Nothing }, toFirebaseAuth ( "Trigger/Logout", Nothing ) )
-        
+
 
 subscriptions _ =
-    fromFirebaseAuth (decodeFirebaseValue)
+    fromFirebaseAuth decodeFirebaseValue
 
 
 decodeFirebaseValue value =

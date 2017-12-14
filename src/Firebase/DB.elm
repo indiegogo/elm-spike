@@ -47,12 +47,15 @@ type FirebaseMsg
     | DeleteCustomer Value
     | FetchRandomCustomers
 
+
 type Msg
     = FirebaseCustomerList (List FirebaseCustomer)
     | FirebaseErrorMessage String
     | UI FirebaseMsg
     | RandomUsersMeResponse (Result Http.Error RandomUser.RandomUserMe)
     | UpdateImportAmount String
+
+
 type alias Model =
     { dbMsg : String
     , all : List FirebaseCustomer
@@ -86,9 +89,8 @@ init =
 view : Model -> Html.Html Msg
 view model =
     Html.div []
-        [
-         Html.text <| "Customers " ++ (toString <| List.length model.all)
-        , Html.input [ (Html.Events.onInput UpdateImportAmount), Html.Attributes.value model.importAmount ] []
+        [ Html.text <| "Customers " ++ (toString <| List.length model.all)
+        , Html.input [ Html.Events.onInput UpdateImportAmount, Html.Attributes.value model.importAmount ] []
         , Html.button [ buttonStyle, Html.Events.onClick (UI FetchRandomCustomers) ] [ Html.text "Import Customers from RandomUser.me" ]
         , viewDbMsg model
         , viewCustomers model.all
@@ -162,10 +164,10 @@ update msg model =
                                 ( { model | dbMsg = "NetworkError" }, Cmd.none )
 
                             Http.BadStatus a ->
-                                ( { model | dbMsg = (toString a) }, Cmd.none )
+                                ( { model | dbMsg = toString a }, Cmd.none )
 
                             Http.BadPayload a b ->
-                                ( { model | dbMsg = (a ++ ":" ++ (toString b)) }, Cmd.none )
+                                ( { model | dbMsg = a ++ ":" ++ toString b }, Cmd.none )
 
         FirebaseCustomerList all ->
             ( { model | all = all }, Cmd.none )
@@ -174,7 +176,7 @@ update msg model =
             ( { model | dbMsg = lastUpdateMessage }, Cmd.none )
 
         UpdateImportAmount str ->
-            ({model| importAmount = str}, Cmd.none)
+            ( { model | importAmount = str }, Cmd.none )
 
         UI CustomerList ->
             ( model, toFirebaseDB ( "Database/Customer/List", Nothing ) )
@@ -186,11 +188,11 @@ update msg model =
             ( model, toFirebaseDB ( "Database/Customer/Delete", Just customerId ) )
 
         UI FetchRandomCustomers ->
-            ( model, importFromRandomUserMe model)
+            ( model, importFromRandomUserMe model )
 
 
 importFromRandomUserMe : Model -> Cmd Msg
-importFromRandomUserMe {importAmount}=
+importFromRandomUserMe { importAmount } =
     Http.send RandomUsersMeResponse (Http.get ("https://randomuser.me/api/?results=" ++ importAmount) RandomUser.decodeRandomUserMe)
 
 
@@ -204,37 +206,37 @@ randomUserMeToCustomers list =
 mapRandomUserToFirebaseCustomer : RandomUser.RandomUser -> FirebaseCustomer
 mapRandomUserToFirebaseCustomer r =
     let
-       a = Debug.log "randomUser" r
+        a =
+            Debug.log "randomUser" r
     in
-    {
-     email = r.email
-    , fullname = List.foldr (++) "" <| List.map (\s -> toCapital s) [ r.name.title, " ", r.name.first, " ", r.name.last ]
-    , phone = r.phone
-    ,  birthday = r.dob
-    , company = "Random User"
-    , id = sanitizeId <| r.id.name ++ (Maybe.withDefault "" <| r.id.value)
-    , pictureUrl = r.picture.large
-    , title = ""
-    , deliveryAddress =
-        { street = r.location.street
-        , city = r.location.city
-        , state = r.location.state
-        , postcode = toString r.location.postcode
-        , country = ""
+        { email = r.email
+        , fullname = List.foldr (++) "" <| List.map (\s -> toCapital s) [ r.name.title, " ", r.name.first, " ", r.name.last ]
+        , phone = r.phone
+        , birthday = r.dob
+        , company = "Random User"
+        , id = sanitizeId <| r.id.name ++ (Maybe.withDefault "" <| r.id.value)
+        , pictureUrl = r.picture.large
+        , title = ""
+        , deliveryAddress =
+            { street = r.location.street
+            , city = r.location.city
+            , state = r.location.state
+            , postcode = toString r.location.postcode
+            , country = ""
+            }
+        , billingAddress =
+            { street = r.location.street
+            , city = r.location.city
+            , state = r.location.state
+            , postcode = toString r.location.postcode
+            , country = ""
+            }
+        , creditCard =
+            { number = ""
+            , expDate = ""
+            , csv = ""
+            }
         }
-    , billingAddress =
-        { street = r.location.street
-        , city = r.location.city
-        , state = r.location.state
-        , postcode = toString r.location.postcode
-        , country = ""
-        }
-    , creditCard =
-        { number = ""
-        , expDate = ""
-        , csv = ""
-        }
-    }
 
 
 
@@ -251,7 +253,7 @@ sanitizeId : String -> String
 sanitizeId idForFirebase =
     String.map
         (\char ->
-            case (List.member (String.fromChar char) sanitizeList) of
+            case List.member (String.fromChar char) sanitizeList of
                 True ->
                     '-'
 
@@ -272,7 +274,7 @@ toCapital str =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    fromFirebaseDB (decodeFirebaseDBValue)
+    fromFirebaseDB decodeFirebaseDBValue
 
 
 decodeFirebaseDBValue : Value -> Msg
@@ -288,7 +290,7 @@ decodeFirebaseDBValue v =
                 FirebaseCustomerList thing
 
             Err msg ->
-                FirebaseErrorMessage ("Unknown Error :" ++ (toString msg))
+                FirebaseErrorMessage ("Unknown Error :" ++ toString msg)
 
 
 type alias FirebaseCustomer =
@@ -326,22 +328,26 @@ decodeFirebaseCustomerList : Decode.Decoder (List FirebaseCustomer)
 decodeFirebaseCustomerList =
     Decode.list decodeFirebaseCustomer
 
+
+
 --
 -- BUG WARNING
 -- Note: The order of the decoder fields
 --       must correspond to the order for fields of the type alias
 --
+
+
 decodeFirebaseCustomer : Decode.Decoder FirebaseCustomer
 decodeFirebaseCustomer =
     DecodePipeline.decode FirebaseCustomer
-        |> DecodePipeline.required "pictureUrl" (Decode.string)
-        |> DecodePipeline.required "birthday" (Decode.string)
-        |> DecodePipeline.required "company" (Decode.string)
-        |> DecodePipeline.required "fullname" (Decode.string)
-        |> DecodePipeline.required "phone" (Decode.string)
-        |> DecodePipeline.required "email" (Decode.string)
-        |> DecodePipeline.required "title" (Decode.string)
-        |> DecodePipeline.required "id" (Decode.string)
+        |> DecodePipeline.required "pictureUrl" Decode.string
+        |> DecodePipeline.required "birthday" Decode.string
+        |> DecodePipeline.required "company" Decode.string
+        |> DecodePipeline.required "fullname" Decode.string
+        |> DecodePipeline.required "phone" Decode.string
+        |> DecodePipeline.required "email" Decode.string
+        |> DecodePipeline.required "title" Decode.string
+        |> DecodePipeline.required "id" Decode.string
         |> DecodePipeline.required "deliveryAddress" decodeCustomerAddress
         |> DecodePipeline.required "billingAddress" decodeCustomerAddress
         |> DecodePipeline.required "creditCard" decodeCustomerCreditCard
@@ -350,19 +356,19 @@ decodeFirebaseCustomer =
 decodeCustomerCreditCard : Decode.Decoder CustomerCreditCard
 decodeCustomerCreditCard =
     DecodePipeline.decode CustomerCreditCard
-        |> DecodePipeline.required "number" (Decode.string)
-        |> DecodePipeline.required "expDate" (Decode.string)
-        |> DecodePipeline.required "csv" (Decode.string)
+        |> DecodePipeline.required "number" Decode.string
+        |> DecodePipeline.required "expDate" Decode.string
+        |> DecodePipeline.required "csv" Decode.string
 
 
 decodeCustomerAddress : Decode.Decoder CustomerAddress
 decodeCustomerAddress =
     DecodePipeline.decode CustomerAddress
-        |> DecodePipeline.required "street" (Decode.string)
-        |> DecodePipeline.required "city" (Decode.string)
-        |> DecodePipeline.required "state" (Decode.string)
-        |> DecodePipeline.required "postcode" (Decode.string)
-        |> DecodePipeline.required "country" (Decode.string)
+        |> DecodePipeline.required "street" Decode.string
+        |> DecodePipeline.required "city" Decode.string
+        |> DecodePipeline.required "state" Decode.string
+        |> DecodePipeline.required "postcode" Decode.string
+        |> DecodePipeline.required "country" Decode.string
 
 
 encodeCustomerCreditCard : CustomerCreditCard -> Encode.Value
