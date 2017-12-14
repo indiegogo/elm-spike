@@ -9,7 +9,7 @@ import Ribbon exposing (defaultConfig)
 import Css.Colors
 import Html.Styled as St
 import Empty as EmptyView
-import CustomersGrid as CustomersView
+import Customers.Grid as CustomersView
 import SignIn as SignInView exposing (Msg(FireAuth))
 import Msg exposing (Msg(..))
 
