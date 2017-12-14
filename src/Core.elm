@@ -12,7 +12,7 @@ import Layout
 import SignIn exposing (ExternalMsg)
 import Session
 import Firebase.DB
-import Customers
+import CustomersGrid
 import Html exposing (Html)
 
 
@@ -21,7 +21,7 @@ type alias EmptyModel =
 
 
 type alias Model =
-    { customersModel : Customers.Model
+    { customersModel : CustomersGrid.Model
     , ordersModel : EmptyModel
     , inventoryModel : EmptyModel
     , signInModel : SignIn.Model
@@ -32,7 +32,7 @@ type alias Model =
 
 initModel : Model
 initModel =
-    { customersModel = Customers.initModel
+    { customersModel = CustomersGrid.initModel
     , ordersModel = EmptyModel
     , inventoryModel = EmptyModel
     , signInModel = SignIn.initModel
@@ -105,7 +105,7 @@ update msg model =
             CustomersPage msg ->
                 let
                     next =
-                        (Customers.update msg model.customersModel)
+                        (CustomersGrid.update msg model.customersModel)
 
                     customersModel =
                         (Tuple.first next)
@@ -141,7 +141,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Sub.map SignInPage (SignIn.subscriptions model.signInModel)
-        , Sub.map CustomersPage (Customers.subscriptions model.customersModel)
+        , Sub.map CustomersPage (CustomersGrid.subscriptions model.customersModel)
         , Sub.map FirebaseDBPage (Firebase.DB.subscriptions model.dbModel)
         ]
 

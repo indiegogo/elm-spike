@@ -1,4 +1,4 @@
-module Customers exposing (Model, Msg, view, update, subscriptions, initModel)
+module CustomersGrid exposing (Model, Msg, view, update, subscriptions, initModel)
 
 import Html exposing (Html, text, div)
 import Html.Attributes exposing(style)

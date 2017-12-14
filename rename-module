@@ -1,0 +1,82 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+class RenameModule
+  attr_reader :current_module_name, :new_module_name, :dir
+  def initialize(current_module_name:,
+                 new_module_name:,
+                 dir:
+                )
+    @current_module_name = current_module_name
+    @new_module_name = new_module_name
+    @dir = dir
+  end
+
+  def rename
+      puts "[rename-module] "
+      puts "[rename-module] Rename module #{current_module_name} to module #{new_module_name} in #{dir}"
+      puts "[rename-module]"
+      rename_in_dir
+  end
+
+  def rename_in_dir
+    Dir["#{dir}/**/*.elm"].each do |file|
+      _as_ = false
+      processed_file = []
+      IO.readlines(file).each do |line|
+        if line =~ /module\s+#{current_module_name}\s/
+          p new_line = line.sub(current_module_name, new_module_name)
+          processed_file << new_line
+        elsif line =~ /import\s+#{current_module_name}\s/
+          if line =~ /\sas\s/
+            _as_ = true
+          end
+          p new_line = line.sub(current_module_name, new_module_name)
+          processed_file << new_line
+        else
+          # somewhere below imports
+          # if _as_ is false then the module can be referenced directly
+          # using . operater ie
+          # \sModuleName\.
+          if line =~ /\s#{current_module_name}\./
+            new_line =  line.sub(/ #{current_module_name}\./," #{new_module_name}.")
+            processed_file << new_line
+          elsif line =~ /\(#{current_module_name}\./
+              new_line =  line.sub(/\(#{current_module_name}\./,"(#{new_module_name}.")
+              processed_file << new_line
+          else
+            processed_file << line
+          end
+        end
+      end
+      if File.basename(file) =~/#{current_module_name}.elm/
+        p new_file = file.sub(current_module_name,new_module_name)
+
+        IO.write(new_file,
+                 processed_file.join(''))
+        FileUtils.rm file
+      else
+        IO.write(file,
+                 processed_file.join(''))
+      end
+    end
+  end
+end
+current_module_name = ARGV.shift
+new_module_name     = ARGV.shift
+dir                 = ARGV.shift
+
+if current_module_name && new_module_name && dir
+ RenameModule.new(current_module_name: current_module_name,
+                  new_module_name: new_module_name,
+                  dir: dir).rename
+
+else
+ puts "[rename-module]"
+ puts "[rename-module] Expecting 3 arguments"
+ puts "[rename-module]"
+ puts "[rename-modlue] Usage Example:"
+ puts "[rename-module]"
+ puts "[rename-module] .\\rename-module CurrentModuleName NewModuleName srcDirectory"
+ puts "[rename-module]"
+ exit(-1)
+end
