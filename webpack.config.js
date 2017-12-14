@@ -1,4 +1,4 @@
-var path = require("path");
+const path = require("path");
 
 module.exports = {
   entry: {
@@ -15,16 +15,19 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(css|scss)$/,
-        use: [
-          'style-loader',
-          'css-loader',
-        ]
+        test: /\.(css)$/,
+        exclude: /node_modules/,
+        loader:  'file-loader?name=assets/[name].[ext]',
       },
       {
         test:    /\.html$/,
         exclude: /node_modules/,
         loader:  'file-loader?name=[name].[ext]',
+      },
+      {
+        test:    /\.png$/,
+        exclude: /node_modules/,
+        loader:  'file-loader?name=assets/[name].[ext]',
       },
       {
         test:    /\.elm$/,

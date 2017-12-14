@@ -8,7 +8,7 @@
 // <script src="/assets/firebase.setup.js"></script>
 /* global: firebase */
 
-let FirebaseAuthPort = function(firebaseAuthPort, elmPort) {
+export function FirebaseAuthPort(firebase, firebaseAuthPort, elmPort) {
 
     let initializeAuthStateChanged = function() {
         firebase.auth().onAuthStateChanged(function(user) {
@@ -54,4 +54,4 @@ let FirebaseAuthPort = function(firebaseAuthPort, elmPort) {
     initializeAuthStateChanged();
     initializeElmSubscripton();
 
-};
+}
