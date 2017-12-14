@@ -1,1 +1,2 @@
-yarn global add elm elm-test create-elm-app elm-oracle elm-format elm-analyse
+yarn global add elm elm-test create-elm-app elm-oracle elm-format 
+npm -g install elm-analyse
