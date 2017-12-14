@@ -7,10 +7,7 @@ port module Firebase.DB
         , subscriptions
         , Msg(UI)
         , FirebaseMsg(CustomerList)
-        , FirebaseCustomer
         , Model
-        , sanitizeId
-        , sanitizeList
         )
 
 --
@@ -26,19 +23,22 @@ import Json.Decode as Decode
 import Json.Encode
 import Json.Decode
 import Json.Decode.Pipeline as DecodePipeline
-import Http
 
+import Models.FirebaseCustomer exposing(FirebaseCustomer, decodeFirebaseCustomerList, encodeFirebaseCustomerList)
+
+import Http
 
 -- elm-package install -- yes noredink/elm-decode-pipeline
 
 import Json.Decode.Pipeline
-import RandomUser
+import Utils.RandomUser as RandomUser
 
 
 port toFirebaseDB : ( String, Maybe Value ) -> Cmd msg
 
 
 port fromFirebaseDB : (Value -> msg) -> Sub msg
+
 
 
 type FirebaseMsg
@@ -142,7 +142,7 @@ update msg model =
                     Debug.log "Random User Me Response" randomUserMe
 
                 firebaseCustomerList randomUser =
-                    encodeFirebaseCustomerList <| randomUserMeToCustomers randomUser
+                    encodeFirebaseCustomerList <| RandomUser.randomUserMeToCustomers randomUser
             in
                 case randomUserMe of
                     Ok randomUser ->
@@ -193,83 +193,7 @@ update msg model =
 
 importFromRandomUserMe : Model -> Cmd Msg
 importFromRandomUserMe { importAmount } =
-    Http.send RandomUsersMeResponse (Http.get ("https://randomuser.me/api/?results=" ++ importAmount) RandomUser.decodeRandomUserMe)
-
-
-randomUserMeToCustomers : RandomUser.RandomUserMe -> List FirebaseCustomer
-randomUserMeToCustomers list =
-    List.map
-        (\randomUser -> mapRandomUserToFirebaseCustomer randomUser)
-        list.results
-
-
-mapRandomUserToFirebaseCustomer : RandomUser.RandomUser -> FirebaseCustomer
-mapRandomUserToFirebaseCustomer r =
-    let
-        a =
-            Debug.log "randomUser" r
-    in
-        { email = r.email
-        , fullname = List.foldr (++) "" <| List.map (\s -> toCapital s) [ r.name.title, " ", r.name.first, " ", r.name.last ]
-        , phone = r.phone
-        , birthday = r.dob
-        , company = "Random User"
-        , id = sanitizeId <| r.id.name ++ (Maybe.withDefault "" <| r.id.value)
-        , pictureUrl = r.picture.large
-        , title = ""
-        , deliveryAddress =
-            { street = r.location.street
-            , city = r.location.city
-            , state = r.location.state
-            , postcode = toString r.location.postcode
-            , country = ""
-            }
-        , billingAddress =
-            { street = r.location.street
-            , city = r.location.city
-            , state = r.location.state
-            , postcode = toString r.location.postcode
-            , country = ""
-            }
-        , creditCard =
-            { number = ""
-            , expDate = ""
-            , csv = ""
-            }
-        }
-
-
-
--- id for firebase must not contain
--- ".", "#", "$", "/", "[", or "]"
-
-
-sanitizeList : List String
-sanitizeList =
-    [ ".", "#", "$", "/", "[", "]" ]
-
-
-sanitizeId : String -> String
-sanitizeId idForFirebase =
-    String.map
-        (\char ->
-            case List.member (String.fromChar char) sanitizeList of
-                True ->
-                    '-'
-
-                _ ->
-                    char
-        )
-        idForFirebase
-
-
-
--- https://github.com/rainteller/elm-capitalize/blob/master/Capitalize.elm
-
-
-toCapital : String -> String
-toCapital str =
-    String.toUpper (String.left 1 str) ++ String.dropLeft 1 str
+    RandomUser.importFromRandomUserMe RandomUsersMeResponse importAmount
 
 
 subscriptions : Model -> Sub Msg
@@ -292,122 +216,3 @@ decodeFirebaseDBValue v =
             Err msg ->
                 FirebaseErrorMessage ("Unknown Error :" ++ toString msg)
 
-
-type alias FirebaseCustomer =
-    { pictureUrl : String
-    , birthday : String
-    , company : String
-    , fullname : String
-    , phone : String
-    , email : String
-    , title : String
-    , id : String
-    , deliveryAddress : CustomerAddress
-    , billingAddress : CustomerAddress
-    , creditCard : CustomerCreditCard
-    }
-
-
-type alias CustomerCreditCard =
-    { number : String
-    , expDate : String
-    , csv : String
-    }
-
-
-type alias CustomerAddress =
-    { street : String
-    , city : String
-    , state : String
-    , postcode : String
-    , country : String
-    }
-
-
-decodeFirebaseCustomerList : Decode.Decoder (List FirebaseCustomer)
-decodeFirebaseCustomerList =
-    Decode.list decodeFirebaseCustomer
-
-
-
---
--- BUG WARNING
--- Note: The order of the decoder fields
---       must correspond to the order for fields of the type alias
---
-
-
-decodeFirebaseCustomer : Decode.Decoder FirebaseCustomer
-decodeFirebaseCustomer =
-    DecodePipeline.decode FirebaseCustomer
-        |> DecodePipeline.required "pictureUrl" Decode.string
-        |> DecodePipeline.required "birthday" Decode.string
-        |> DecodePipeline.required "company" Decode.string
-        |> DecodePipeline.required "fullname" Decode.string
-        |> DecodePipeline.required "phone" Decode.string
-        |> DecodePipeline.required "email" Decode.string
-        |> DecodePipeline.required "title" Decode.string
-        |> DecodePipeline.required "id" Decode.string
-        |> DecodePipeline.required "deliveryAddress" decodeCustomerAddress
-        |> DecodePipeline.required "billingAddress" decodeCustomerAddress
-        |> DecodePipeline.required "creditCard" decodeCustomerCreditCard
-
-
-decodeCustomerCreditCard : Decode.Decoder CustomerCreditCard
-decodeCustomerCreditCard =
-    DecodePipeline.decode CustomerCreditCard
-        |> DecodePipeline.required "number" Decode.string
-        |> DecodePipeline.required "expDate" Decode.string
-        |> DecodePipeline.required "csv" Decode.string
-
-
-decodeCustomerAddress : Decode.Decoder CustomerAddress
-decodeCustomerAddress =
-    DecodePipeline.decode CustomerAddress
-        |> DecodePipeline.required "street" Decode.string
-        |> DecodePipeline.required "city" Decode.string
-        |> DecodePipeline.required "state" Decode.string
-        |> DecodePipeline.required "postcode" Decode.string
-        |> DecodePipeline.required "country" Decode.string
-
-
-encodeCustomerCreditCard : CustomerCreditCard -> Encode.Value
-encodeCustomerCreditCard record =
-    Encode.object
-        [ ( "number", Encode.string <| record.number )
-        , ( "expDate", Encode.string <| record.expDate )
-        , ( "csv", Encode.string <| record.csv )
-        ]
-
-
-encodeCustomerAddress : CustomerAddress -> Encode.Value
-encodeCustomerAddress record =
-    Encode.object
-        [ ( "street", Encode.string <| record.street )
-        , ( "city", Encode.string <| record.city )
-        , ( "state", Encode.string <| record.state )
-        , ( "postcode", Encode.string <| record.postcode )
-        , ( "country", Encode.string <| record.country )
-        ]
-
-
-encodeFirebaseCustomer : FirebaseCustomer -> Encode.Value
-encodeFirebaseCustomer record =
-    Encode.object
-        [ ( "pictureUrl", Encode.string <| record.pictureUrl )
-        , ( "birthday", Encode.string <| record.birthday )
-        , ( "company", Encode.string <| record.company )
-        , ( "fullname", Encode.string <| record.fullname )
-        , ( "phone", Encode.string <| record.phone )
-        , ( "email", Encode.string <| record.email )
-        , ( "title", Encode.string <| record.title )
-        , ( "id", Encode.string <| record.id )
-        , ( "creditCard", encodeCustomerCreditCard <| record.creditCard )
-        , ( "deliveryAddress", encodeCustomerAddress <| record.deliveryAddress )
-        , ( "billingAddress", encodeCustomerAddress <| record.billingAddress )
-        ]
-
-
-encodeFirebaseCustomerList : List FirebaseCustomer -> Encode.Value
-encodeFirebaseCustomerList customers =
-    Encode.list <| List.map encodeFirebaseCustomer <| customers

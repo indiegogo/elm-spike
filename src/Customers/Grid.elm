@@ -8,7 +8,7 @@ import Material.Color as Color
 import Material.Typography as Typography
 import Firebase.DB
 import Debug as D exposing (log)
-
+import Models.FirebaseCustomer exposing(FirebaseCustomer)
 
 type alias Model =
     { dbModel : Firebase.DB.Model
@@ -35,7 +35,7 @@ margin1 =
     css "margin" "0"
 
 
-anMdlCard : Firebase.DB.FirebaseCustomer -> Html Msg
+anMdlCard : FirebaseCustomer -> Html Msg
 anMdlCard customer =
     Card.view
         [ css "width" "256px"

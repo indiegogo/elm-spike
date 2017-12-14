@@ -1,9 +1,87 @@
-module RandomUser exposing(..)
+module Utils.RandomUser exposing(..)
 
 import Json.Encode
 import Json.Decode
 -- elm-package install -- yes noredink/elm-decode-pipeline
 import Json.Decode.Pipeline
+import Models.FirebaseCustomer exposing(FirebaseCustomer)
+import Http
+
+
+importFromRandomUserMe: ( (Result Http.Error RandomUserMe) -> msg) -> String -> Cmd msg
+importFromRandomUserMe msg importAmount =
+    Http.send msg (Http.get ("https://randomuser.me/api/?results=" ++ importAmount) decodeRandomUserMe)
+
+randomUserMeToCustomers : RandomUserMe -> List FirebaseCustomer
+randomUserMeToCustomers list =
+    List.map
+        (\randomUser -> mapRandomUserToFirebaseCustomer randomUser)
+        list.results
+
+-- id for firebase must not contain
+-- ".", "#", "$", "/", "[", or "]"
+
+
+sanitizeList : List String
+sanitizeList =
+    [ ".", "#", "$", "/", "[", "]" ]
+
+
+sanitizeId : String -> String
+sanitizeId idForFirebase =
+    String.map
+        (\char ->
+            case List.member (String.fromChar char) sanitizeList of
+                True ->
+                    '-'
+
+                _ ->
+                    char
+        )
+        idForFirebase
+-- https://github.com/rainteller/elm-capitalize/blob/master/Capitalize.elm
+
+
+toCapital : String -> String
+toCapital str =
+    String.toUpper (String.left 1 str) ++ String.dropLeft 1 str
+
+
+mapRandomUserToFirebaseCustomer : RandomUser -> FirebaseCustomer
+mapRandomUserToFirebaseCustomer r =
+    let
+        a =
+            Debug.log "randomUser" r
+    in
+        { email = r.email
+        , fullname = List.foldr (++) "" <| List.map (\s -> toCapital s) [ r.name.title, " ", r.name.first, " ", r.name.last ]
+        , phone = r.phone
+        , birthday = r.dob
+        , company = "Random User"
+        , id = sanitizeId <| r.id.name ++ (Maybe.withDefault "" <| r.id.value)
+        , pictureUrl = r.picture.large
+        , title = ""
+        , deliveryAddress =
+            { street = r.location.street
+            , city = r.location.city
+            , state = r.location.state
+            , postcode = toString r.location.postcode
+            , country = ""
+            }
+        , billingAddress =
+            { street = r.location.street
+            , city = r.location.city
+            , state = r.location.state
+            , postcode = toString r.location.postcode
+            , country = ""
+            }
+        , creditCard =
+            { number = ""
+            , expDate = ""
+            , csv = ""
+            }
+        }
+
 
 type alias RandomUserMe =
     { results : List RandomUser
