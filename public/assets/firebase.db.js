@@ -8,8 +8,8 @@
 // <script src="/assets/firebase.setup.js"></script>
 // globals: firebase
 
-let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
-  let flattenWithId = function(thing) {
+const FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
+  const flattenWithId = function(thing) {
     let customersWithKey = [];
     for (let member in thing) {
       let tmp = thing[member];
@@ -19,18 +19,20 @@ let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
     return customersWithKey;
   };
 
-  let importCustomers = function(list) {
+  const importCustomers = function(list) {
+    disableRealtimeUpdates();
     for(let i in list) {
-      let c = list[i];
-       customerCreate(c, false); 
+      const c = list[i];
+      customerCreate(c); 
     }
     getCustomers();
-  }
+    enableRealtimeUpdates();
+  };
 
-  let customerCreate = function(user_ob, get = false) {
+  const customerCreate = function(user_ob) {
     
-    var database = firebase.database();
-    var nextKey = user_ob.id;
+    const database = firebase.database();
+    let nextKey = user_ob.id;
     if (!nextKey) {
       nextKey = database.ref().child("customers").push().key;
     }
@@ -40,19 +42,14 @@ let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
 
     database.ref().update(updates).then(function() {
       console.log("update success" + nextKey);
-      // update customer list fresh (simple case)
-      if (get) {
-        getCustomers();
-      }
     }).catch(function() {
       console.log("update fail" + nextKey);
-      // getCustomers()
-      // let know failure
+
     });
   };
 
-  let getCustomers = function() {
-    var database = firebase.database();
+  const getCustomers = function() {
+    const database = firebase.database();
     database.ref().child("customers").once("value").then((customers) => {
       console.log("get customers ok");
       let customersWithKey = flattenWithId(customers.val() || []);
@@ -64,24 +61,40 @@ let FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
     });
   };
 
-  let deleteCustomer = function(customerId) {
-    var database = firebase.database();
+  const deleteCustomer = function(customerId) {
+    const database = firebase.database();
     database.ref().child("customers/" + customerId).remove().then(() => {
       console.log("Deleted: " + customerId);
     });
   };
 
-  let initalizeRealtimeCustomerUpdates = function() {
-    var database = firebase.database();
-    database.ref().child("customers").on("value",function(snapshot) {
-      fromFirebaseDBPort.send(
-        flattenWithId(snapshot.val() || [])
-      );
+  let realtimeUpdateCount = 0;
 
-    });
+  const enableRealtimeUpdates = function() {
+    console.log("Turning ON Realtime Updates ")
+    const database = firebase.database();
+    database.ref().child("customers").on("value",updateCustomer);
+  }
+
+  const disableRealtimeUpdates = function() {
+    console.log("Turning OFF Realtime Updates ")
+    const database = firebase.database();
+    database.ref().child("customers").off("value",updateCustomer);
+  }
+
+  const updateCustomer = function(snapshot) {
+    realtimeUpdateCount++;
+    console.log("Realtime Fired Count: " + realtimeUpdateCount);
+    fromFirebaseDBPort.send(
+      flattenWithId(snapshot.val() || [])
+    );
+  }
+
+  const initalizeRealtimeCustomerUpdates = function() {
+    enableRealtimeUpdates();
   };
 
-  let initializeElmSubscripton = function() {
+  const initializeElmSubscripton = function() {
     elmPort.subscribe(function(msg) {
       console.log("DB :: Chomp Chomp .. got a message from Elm :: ", msg);
       switch (msg[0]) {
