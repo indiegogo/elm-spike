@@ -4,24 +4,13 @@ USER root
 WORKDIR /app
 
 RUN npm install -g yarn
-RUN yarn global add elm elm-test
+RUN yarn global add elm elm-test create-elm-app
 
 COPY elm-package.json elm-package.json
 RUN cat /app/elm-package.json
-RUN elm-package install --yes
-
 
 COPY public/ public/
-COPY assets/ public/assets/
 COPY src/ src/
-RUN elm-make  src/Main.elm --output public/assets/elm.js
-
-FROM openjdk:8-alpine as closure
-WORKDIR /app
-COPY --from=elm_build /app/public/ public/
-COPY closure-compiler/ closure-compiler/
-RUN ls -al
-
-RUN java -jar closure-compiler/closure-compiler-v20171023.jar --js ./public/assets/elm.js --js_output_file ./public/assets/elm-closure.js
-RUN tar zcf build.tar.gz public
+RUN elm-app build
+RUN tar zcf build.tar.gz build
 
