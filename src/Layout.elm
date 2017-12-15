@@ -10,8 +10,11 @@ import Css.Colors
 import Html.Styled as St
 import Empty as EmptyView
 import Customers.Grid as CustomersView
+import Customers.DetailList as CustomersDetailView
+
 import SignIn as SignInView exposing (Msg(FireAuth))
 import Msg exposing (Msg(..))
+
 
 
 -- i think importing SignIn's Child Module in Layout is a bad smell for isolation / encapsulation
@@ -171,6 +174,7 @@ tabSet =
     , ( 1, "Orders", "ord", .ordersModel >> EmptyView.view >> Html.map EmptyPage )
     , ( 1, "Inventory", "inv", .inventoryModel >> EmptyView.view >> Html.map EmptyPage )
     , ( 1, "DB Test", "db", .dbModel >> FirebaseDB.view >> Html.map FirebaseDBPage )
+    , ( 1, "Detail List", "details", .detailsModel >> CustomersDetailView.view >> Html.map CustomersDetailListPage )
     ]
 
 

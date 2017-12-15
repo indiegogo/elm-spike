@@ -13,6 +13,7 @@ import SignIn
 import Session
 import Firebase.DB
 import Customers.Grid
+import Customers.DetailList
 import Html exposing (Html)
 
 
@@ -22,6 +23,7 @@ type alias EmptyModel =
 
 type alias Model =
     { customersModel : Customers.Grid.Model
+    , detailsModel   : Customers.DetailList.Model
     , ordersModel : EmptyModel
     , inventoryModel : EmptyModel
     , signInModel : SignIn.Model
@@ -33,6 +35,7 @@ type alias Model =
 initModel : Model
 initModel =
     { customersModel = Customers.Grid.initModel
+    , detailsModel   = Customers.DetailList.initModel
     , ordersModel = EmptyModel
     , inventoryModel = EmptyModel
     , signInModel = SignIn.initModel
@@ -77,6 +80,8 @@ update msg model =
             D.log "update" "update"
     in
         case msg of
+            CustomersDetailListPage _ ->
+               (model, Cmd.none)
             SelectPage idx ->
                 ( { model
                     | session = Session.setPageIndex model.session idx

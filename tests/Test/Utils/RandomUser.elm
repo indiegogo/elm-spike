@@ -1,7 +1,7 @@
-module Test.Firebase.DB exposing (..)
+module Test.Utils.RandomUser exposing (..)
 
 import Expect
-import Firebase.DB
+import Utils.RandomUser as RU
 import Test exposing (..)
 
 
@@ -16,5 +16,5 @@ all =
     describe "Firebase Id Sanitize"
         [ test "sanitizeId" <|
             \_ ->
-                Expect.equal (Firebase.DB.sanitizeId ".0-10.10") "-0-10-10"
+                Expect.equal (RU.sanitizeId ".0-10.10") "-0-10-10"
         ]

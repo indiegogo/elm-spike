@@ -5,6 +5,7 @@ import Customers.Grid exposing (Msg)
 import SignIn exposing (Msg)
 import Firebase.DB exposing(Msg)
 import Firebase.Auth exposing(Model)
+import Customers.DetailList
 
 type Msg
     = SelectPage Int
@@ -12,3 +13,4 @@ type Msg
     | EmptyPage Empty.Msg
     | SignInPage SignIn.Msg
     | FirebaseDBPage Firebase.DB.Msg
+    | CustomersDetailListPage Customers.DetailList.Actions

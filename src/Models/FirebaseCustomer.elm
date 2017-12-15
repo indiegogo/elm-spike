@@ -1,4 +1,4 @@
-module Models.FirebaseCustomer exposing(FirebaseCustomer,initModel, encodeFirebaseCustomerList, decodeFirebaseCustomerList)
+module Models.FirebaseCustomer exposing(FirebaseCustomer, CustomerAddress, CustomerCreditCard,initModel, encodeFirebaseCustomerList, decodeFirebaseCustomerList)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode
@@ -13,6 +13,8 @@ initModel =
         (CustomerAddress "" "" "" "" "")
         (CustomerAddress "" "" "" "" "")
         (CustomerCreditCard "" "" "")
+
+
 
 type alias FirebaseCustomer =
     { pictureUrl : String
@@ -34,7 +36,6 @@ type alias CustomerCreditCard =
     , expDate : String
     , csv : String
     }
-
 
 type alias CustomerAddress =
     { street : String
