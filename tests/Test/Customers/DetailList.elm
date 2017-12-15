@@ -13,7 +13,7 @@ import Test exposing (..)
 import Test.Html.Query as Query
 import Test.Html.Selector exposing (text, tag, class)
 import Array
-import Models.FirebaseCustomer exposing (FirebaseCustomer, CustomerAddress, CustomerCreditCard)
+import Models.Customer exposing (Customer, CustomerAddress, CustomerCreditCard)
 
 
 testModel =
@@ -21,7 +21,7 @@ testModel =
 
 
 customer1 =
-    FirebaseCustomer ""
+    Customer ""
         ""
         "IGG"
         "Mr Dave"
@@ -35,7 +35,7 @@ customer1 =
 
 
 customer2 =
-    FirebaseCustomer ""
+    Customer ""
         ""
         "IGG"
         "Mr Slava"
@@ -49,7 +49,7 @@ customer2 =
 
 
 customer3 =
-    FirebaseCustomer ""
+    Customer ""
         ""
         "IGG"
         "Mrs Danae"
@@ -61,7 +61,7 @@ customer3 =
         (CustomerAddress "" "" "" "" "")
         (CustomerCreditCard "" "" "")
 
-fullCustomer: FirebaseCustomer
+fullCustomer: Customer
 fullCustomer =
     {
         pictureUrl = "http//fake.url/1"

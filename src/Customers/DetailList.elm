@@ -4,12 +4,12 @@ import Array exposing (Array)
 import Html exposing (Html, div, text, li)
 import Html.Attributes exposing (class)
 import Http
-import Models.FirebaseCustomer exposing (FirebaseCustomer, encodeFirebaseCustomerList)
+import Models.Customer exposing (Customer, encodeCustomerList)
 import Utils.RandomUser exposing (RandomUserMe, importFromRandomUserMe, randomUserMeToCustomers)
 
 
 type alias Model =
-    { customers : Array FirebaseCustomer
+    { customers : Array Customer
     , errorMsg : String
     }
 
@@ -45,7 +45,7 @@ view model =
     , div [] (customerList model)
         ]
 
-customerToHtml: FirebaseCustomer -> Html msg
+customerToHtml: Customer -> Html msg
 customerToHtml customer =
     li []
         [ div [ class "name" ] [ text customer.fullname ]
@@ -71,7 +71,7 @@ update msg model =
         ImportCustomers result ->
             let
                 firebaseCustomerList randomUserMe =
-                    encodeFirebaseCustomerList <| randomUserMeToCustomers randomUserMe
+                    encodeCustomerList <| randomUserMeToCustomers randomUserMe
             in
                 case result of
                     Ok randomUserMe ->

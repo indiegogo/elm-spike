@@ -24,7 +24,7 @@ import Json.Encode
 import Json.Decode
 import Json.Decode.Pipeline as DecodePipeline
 
-import Models.FirebaseCustomer exposing(FirebaseCustomer, decodeFirebaseCustomerList, encodeFirebaseCustomerList)
+import Models.Customer exposing(Customer, decodeCustomerList, encodeCustomerList)
 
 import Http
 
@@ -49,7 +49,7 @@ type FirebaseMsg
 
 
 type Msg
-    = FirebaseCustomerList (List FirebaseCustomer)
+    = SetCustomerList (List Customer)
     | FirebaseErrorMessage String
     | UI FirebaseMsg
     | RandomUsersMeResponse (Result Http.Error RandomUser.RandomUserMe)
@@ -58,7 +58,7 @@ type Msg
 
 type alias Model =
     { dbMsg : String
-    , all : List FirebaseCustomer
+    , all : List Customer
     , importAmount : String
     }
 
@@ -102,7 +102,7 @@ viewDbMsg model =
     Html.div [] [ Html.text "Last DB Message ", Html.text model.dbMsg ]
 
 
-viewCustomers : List FirebaseCustomer -> Html.Html Msg
+viewCustomers : List Customer -> Html.Html Msg
 viewCustomers list =
     Html.ul []
         (List.map
@@ -120,7 +120,7 @@ viewCustomers list =
         )
 
 
-encodedCustomer : FirebaseCustomer -> Value
+encodedCustomer : Customer -> Value
 encodedCustomer customer =
     Encode.string customer.id
 
@@ -142,7 +142,7 @@ update msg model =
                     Debug.log "Random User Me Response" randomUserMe
 
                 firebaseCustomerList randomUser =
-                    encodeFirebaseCustomerList <| RandomUser.randomUserMeToCustomers randomUser
+                    encodeCustomerList <| RandomUser.randomUserMeToCustomers randomUser
             in
                 case randomUserMe of
                     Ok randomUser ->
@@ -169,7 +169,7 @@ update msg model =
                             Http.BadPayload a b ->
                                 ( { model | dbMsg = a ++ ":" ++ toString b }, Cmd.none )
 
-        FirebaseCustomerList all ->
+        SetCustomerList all ->
             ( { model | all = all }, Cmd.none )
 
         FirebaseErrorMessage lastUpdateMessage ->
@@ -205,13 +205,13 @@ decodeFirebaseDBValue : Value -> Msg
 decodeFirebaseDBValue v =
     let
         result =
-            Decode.decodeValue decodeFirebaseCustomerList v
+            Decode.decodeValue decodeCustomerList v
 
         -- to change
     in
         case result of
             Ok thing ->
-                FirebaseCustomerList thing
+                SetCustomerList thing
 
             Err msg ->
                 FirebaseErrorMessage ("Unknown Error :" ++ toString msg)

@@ -1,4 +1,4 @@
-module Models.FirebaseCustomer exposing(FirebaseCustomer, CustomerAddress, CustomerCreditCard,initModel, encodeFirebaseCustomerList, decodeFirebaseCustomerList)
+module Models.Customer exposing(Customer, CustomerAddress, CustomerCreditCard,initModel, encodeCustomerList, decodeCustomerList)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode
@@ -7,16 +7,16 @@ import Json.Decode
 import Json.Decode.Pipeline as DecodePipeline
 
 
-initModel: FirebaseCustomer 
+initModel: Customer 
 initModel =
-    FirebaseCustomer "" "" "" "" "" "" "" ""
+    Customer "" "" "" "" "" "" "" ""
         (CustomerAddress "" "" "" "" "")
         (CustomerAddress "" "" "" "" "")
         (CustomerCreditCard "" "" "")
 
 
 
-type alias FirebaseCustomer =
+type alias Customer =
     { pictureUrl : String
     , birthday : String
     , company : String
@@ -46,9 +46,9 @@ type alias CustomerAddress =
     }
 
 
-decodeFirebaseCustomerList : Decode.Decoder (List FirebaseCustomer)
-decodeFirebaseCustomerList =
-    Decode.list decodeFirebaseCustomer
+decodeCustomerList : Decode.Decoder (List Customer)
+decodeCustomerList =
+    Decode.list decodeCustomer
 
 
 
@@ -59,9 +59,9 @@ decodeFirebaseCustomerList =
 --
 
 
-decodeFirebaseCustomer : Decode.Decoder FirebaseCustomer
-decodeFirebaseCustomer =
-    DecodePipeline.decode FirebaseCustomer
+decodeCustomer : Decode.Decoder Customer
+decodeCustomer =
+    DecodePipeline.decode Customer
         |> DecodePipeline.required "pictureUrl" Decode.string
         |> DecodePipeline.required "birthday" Decode.string
         |> DecodePipeline.required "company" Decode.string
@@ -113,8 +113,8 @@ encodeCustomerAddress record =
         ]
 
 
-encodeFirebaseCustomer : FirebaseCustomer -> Encode.Value
-encodeFirebaseCustomer record =
+encodeCustomer : Customer -> Encode.Value
+encodeCustomer record =
     Encode.object
         [ ( "pictureUrl", Encode.string <| record.pictureUrl )
         , ( "birthday", Encode.string <| record.birthday )
@@ -130,6 +130,6 @@ encodeFirebaseCustomer record =
         ]
 
 
-encodeFirebaseCustomerList : List FirebaseCustomer -> Encode.Value
-encodeFirebaseCustomerList customers =
-    Encode.list <| List.map encodeFirebaseCustomer <| customers
+encodeCustomerList : List Customer -> Encode.Value
+encodeCustomerList customers =
+    Encode.list <| List.map encodeCustomer <| customers

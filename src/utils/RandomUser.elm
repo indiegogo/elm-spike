@@ -4,7 +4,7 @@ import Json.Encode
 import Json.Decode
 -- elm-package install -- yes noredink/elm-decode-pipeline
 import Json.Decode.Pipeline
-import Models.FirebaseCustomer exposing(FirebaseCustomer)
+import Models.Customer exposing(Customer)
 import Http
 
 
@@ -12,10 +12,10 @@ importFromRandomUserMe: ( (Result Http.Error RandomUserMe) -> msg) -> String -> 
 importFromRandomUserMe msg importAmount =
     Http.send msg (Http.get ("https://randomuser.me/api/?results=" ++ importAmount) decodeRandomUserMe)
 
-randomUserMeToCustomers : RandomUserMe -> List FirebaseCustomer
+randomUserMeToCustomers : RandomUserMe -> List Customer
 randomUserMeToCustomers list =
     List.map
-        (\randomUser -> mapRandomUserToFirebaseCustomer randomUser)
+        (\randomUser -> mapRandomUserToCustomer randomUser)
         list.results
 
 -- id for firebase must not contain
@@ -47,8 +47,8 @@ toCapital str =
     String.toUpper (String.left 1 str) ++ String.dropLeft 1 str
 
 
-mapRandomUserToFirebaseCustomer : RandomUser -> FirebaseCustomer
-mapRandomUserToFirebaseCustomer r =
+mapRandomUserToCustomer : RandomUser -> Customer
+mapRandomUserToCustomer r =
     let
         a =
             Debug.log "randomUser" r
