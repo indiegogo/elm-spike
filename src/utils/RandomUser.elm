@@ -8,6 +8,10 @@ import Models.Customer exposing(Customer)
 import Http
 
 
+importFromRandomUserMeWithSeed: ( (Result Http.Error RandomUserMe) -> msg) -> String -> String -> Cmd msg
+importFromRandomUserMeWithSeed msg importAmount seed =
+    Http.send msg (Http.get ("https://randomuser.me/api/?seed="++ seed ++"&results=" ++ importAmount) decodeRandomUserMe)
+
 importFromRandomUserMe: ( (Result Http.Error RandomUserMe) -> msg) -> String -> Cmd msg
 importFromRandomUserMe msg importAmount =
     Http.send msg (Http.get ("https://randomuser.me/api/?results=" ++ importAmount) decodeRandomUserMe)
@@ -58,7 +62,7 @@ mapRandomUserToCustomer r =
         , phone = r.phone
         , birthday = r.dob
         , company = "Random User"
-        , id = sanitizeId <| r.id.name ++ (Maybe.withDefault "" <| r.id.value)
+        , id = sanitizeId <| r.id.name ++ (Maybe.withDefault r.login.salt <| r.id.value) -- avoid empty id with login.salt
         , pictureUrl = r.picture.large
         , title = ""
         , deliveryAddress =

@@ -1,4 +1,4 @@
-module Models.Customer exposing(Customer, CustomerAddress, CustomerCreditCard,initModel, encodeCustomerList, decodeCustomerList)
+module Models.Customer exposing(..)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode
@@ -7,14 +7,15 @@ import Json.Decode
 import Json.Decode.Pipeline as DecodePipeline
 
 
-initModel: Customer 
-initModel =
+emptyModel: Customer
+emptyModel =
     Customer "" "" "" "" "" "" "" ""
         (CustomerAddress "" "" "" "" "")
         (CustomerAddress "" "" "" "" "")
         (CustomerCreditCard "" "" "")
 
 
+type alias CustomerList = List (Customer)
 
 type alias Customer =
     { pictureUrl : String
@@ -46,7 +47,7 @@ type alias CustomerAddress =
     }
 
 
-decodeCustomerList : Decode.Decoder (List Customer)
+decodeCustomerList : Decode.Decoder CustomerList
 decodeCustomerList =
     Decode.list decodeCustomer
 

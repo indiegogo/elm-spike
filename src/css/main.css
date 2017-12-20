@@ -3,6 +3,13 @@ body {
   margin: 0;
   text-align: center;
   color: #293c4b;
+  background: repeating-linear-gradient(
+    to right,
+    #fefbfb,
+    #fefbfb 52px,
+    #feefeb 52px,
+    #feefeb 104px
+  );
 }
 
 h1 {
@@ -13,6 +20,89 @@ img {
   margin: 20px 0;
   max-width: 200px;
 }
+
 li {
   list-style-type: none;
+}
+
+.bigLineHeight {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+.customer-list {
+  overflow:hidden;
+  width:auto;
+}
+
+.customer-list ol { 
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  display:flex;
+
+  margin:0;
+  padding:0;
+}
+
+.customer-list li {
+  background: white;
+  height:560px;
+}
+
+.customer-list li div {
+  width: inherit;
+}
+.customer {
+  border: 1px solid #181818;
+  font-size: 12px;
+}
+
+.customer__detail h3 {
+  font-weight: bold;
+  color: #6094D0;
+  text-transform: uppercase;
+  border-bottom: 1px solid #dddddd;
+  font-size: 12px;
+  line-height: 26px;
+}
+.customer__detail {
+  padding: 0 20px 20px 20px;
+}
+
+.businessCard {
+  border-bottom: 1px solid #dddddd;
+  display: flex;
+}
+
+.businessCard__info {
+  align-self: center;
+  padding: 5px 20px; 
+}
+
+.businessCard__line {
+  margin-bottom: 10px; 
+}
+.businessCard--name {
+  font-weight: bold;
+}
+.businessCard--title {
+  font-style: italic;
+}
+.businessCard--company {
+
+}
+.businessCard--phone {
+  font-weight: bold;
+}
+.businessCard--email {
+  font-weight: bold;
+}
+.businessCard img {
+  width: 150px;
+  height: 150px;
+  border-right: 1px solid #dddddd;
+  padding-left: 20px;
+  padding-top: 20px;
 }

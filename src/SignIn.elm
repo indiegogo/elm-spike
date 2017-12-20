@@ -19,8 +19,8 @@ type ExternalMsg =
     | EstablishSession FireAuth.Model
 
 (=>): a -> b -> (a, b)
-(=>) =
-    (,)
+(=>) a b=
+    (a,b)
 
 type alias Account =
     { username : String

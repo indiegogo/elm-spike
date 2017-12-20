@@ -57,7 +57,9 @@ init =
             D.log "function" "init"
     in
         ( initModel
-        , Cmd.none
+        , Cmd.batch [
+               Cmd.map CustomersDetailListPage Customers.DetailList.initCmd
+              ]
         )
 
 
@@ -80,8 +82,18 @@ update msg model =
             D.log "update" "update"
     in
         case msg of
-            CustomersDetailListPage _ ->
-               (model, Cmd.none)
+            CustomersDetailListPage a ->
+                let
+                    next =
+                        Customers.DetailList.update a model.detailsModel
+
+                    detailsModel =
+                        Tuple.first next
+
+                    cmd =
+                        Cmd.map CustomersDetailListPage <| Tuple.second next
+                in
+                    ( { model | detailsModel = detailsModel }, cmd )
             SelectPage idx ->
                 ( { model
                     | session = Session.setPageIndex model.session idx
@@ -148,6 +160,7 @@ subscriptions model =
         [ Sub.map SignInPage (SignIn.subscriptions model.signInModel)
         , Sub.map CustomersPage (Customers.Grid.subscriptions model.customersModel)
         , Sub.map FirebaseDBPage (Firebase.DB.subscriptions model.dbModel)
+        , Sub.map CustomersDetailListPage (Customers.DetailList.subscriptions model.detailsModel)
         ]
 
 

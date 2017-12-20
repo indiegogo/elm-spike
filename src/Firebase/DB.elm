@@ -44,7 +44,7 @@ port fromFirebaseDB : (Value -> msg) -> Sub msg
 type FirebaseMsg
     = CreateCustomer Value
     | CustomerList
-    | DeleteCustomer Value
+    | DeleteCustomer String
     | FetchRandomCustomers
 
 
@@ -67,7 +67,7 @@ main : Program Never Model Msg
 main =
     Html.program
         { init = init
-        , view = view
+        , view = view 
         , update = update
         , subscriptions = subscriptions
         }
@@ -92,6 +92,7 @@ view model =
         [ Html.text <| "Customers " ++ (toString <| List.length model.all)
         , Html.input [ Html.Events.onInput UpdateImportAmount, Html.Attributes.value model.importAmount ] []
         , Html.button [ buttonStyle, Html.Events.onClick (UI FetchRandomCustomers) ] [ Html.text "Import Customers from RandomUser.me" ]
+        , Html.button [ buttonStyle, Html.Events.onClick (UI (DeleteCustomer  "")) ] [ Html.text "Delete All" ]
         , viewDbMsg model
         , viewCustomers model.all
         ]
@@ -113,16 +114,11 @@ viewCustomers list =
                     , Html.text customer.birthday
                     , Html.text customer.company
                     , Html.text customer.email
-                    , Html.button [ Html.Events.onClick (UI (DeleteCustomer (encodedCustomer customer))) ] [ Html.text "Delete" ]
+                    , Html.button [ Html.Events.onClick (UI (DeleteCustomer customer.id)) ] [ Html.text "Delete" ]
                     ]
             )
             list
         )
-
-
-encodedCustomer : Customer -> Value
-encodedCustomer customer =
-    Encode.string customer.id
 
 
 cupcakeImg =
@@ -185,7 +181,7 @@ update msg model =
             ( model, toFirebaseDB ( "Database/Customer/Create", Just valueObject ) )
 
         UI (DeleteCustomer customerId) ->
-            ( model, toFirebaseDB ( "Database/Customer/Delete", Just customerId ) )
+            ( model, toFirebaseDB ( "Database/Customer/Delete", Just (Encode.string customerId) ) )
 
         UI FetchRandomCustomers ->
             ( model, importFromRandomUserMe model )
@@ -201,18 +197,42 @@ subscriptions _ =
     fromFirebaseDB decodeFirebaseDBValue
 
 
+
+
+type alias FirebaseEvent =
+    { event : String
+      , value : Value
+    }
+
+decodeFirebaseEvent : Json.Decode.Decoder FirebaseEvent
+decodeFirebaseEvent =
+    Json.Decode.Pipeline.decode FirebaseEvent
+        |> Json.Decode.Pipeline.required "event" (Json.Decode.string)
+        |> Json.Decode.Pipeline.required "value" (Json.Decode.value) 
+
+eventToMsg: Result String FirebaseEvent -> Msg
+eventToMsg result =
+    case result of
+        Err string ->
+            FirebaseErrorMessage ("EventMapping Error :" ++ string)
+        Ok {event, value} ->
+            case event of 
+                "customer_list" ->
+                    let
+                        result =
+                            Decode.decodeValue decodeCustomerList value
+                    in
+                    case result of
+                        Ok thing ->
+                           SetCustomerList thing
+
+                        Err msg ->
+                           FirebaseErrorMessage ("CustomerList Value Error :" ++ toString msg)
+                _ ->
+                    FirebaseErrorMessage ("Unknown event :" ++ event)
+
+
 decodeFirebaseDBValue : Value -> Msg
 decodeFirebaseDBValue v =
-    let
-        result =
-            Decode.decodeValue decodeCustomerList v
-
-        -- to change
-    in
-        case result of
-            Ok thing ->
-                SetCustomerList thing
-
-            Err msg ->
-                FirebaseErrorMessage ("Unknown Error :" ++ toString msg)
+   (eventToMsg (Decode.decodeValue decodeFirebaseEvent v))
 

@@ -54,7 +54,7 @@ const FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
       console.log("get customers ok");
       let customersWithKey = flattenWithId(customers.val() || []);
       fromFirebaseDBPort.send(
-        customersWithKey
+        {event: "customer_list", value: customersWithKey}
       );
     }).catch(function(err){
       console.log("get customers fail", err);
@@ -86,7 +86,7 @@ const FirebaseDBPort = function(fromFirebaseDBPort, elmPort) {
     realtimeUpdateCount++;
     console.log("Realtime Fired Count: " + realtimeUpdateCount);
     fromFirebaseDBPort.send(
-      flattenWithId(snapshot.val() || [])
+      {event: "customer_list", value: flattenWithId(snapshot.val() || [])}
     );
   }
 
