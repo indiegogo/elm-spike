@@ -152,19 +152,19 @@ update msg maybeModel =
 
 customerCreditCardEvent : CustomerCreditCardEvents
 customerCreditCardEvent =
-    { number  = (Html.Attributes.map Update (Html.Attributes.map CreditCardEdit (onInput Number)))
+    { number = (Html.Attributes.map Update (Html.Attributes.map CreditCardEdit (onInput Number)))
     , expDate = (Html.Attributes.map Update (Html.Attributes.map CreditCardEdit (onInput ExpDate)))
-    , csv     = (Html.Attributes.map Update (Html.Attributes.map CreditCardEdit (onInput Csv)))
+    , csv = (Html.Attributes.map Update (Html.Attributes.map CreditCardEdit (onInput Csv)))
     }
 
 
 customerBillingAddressEvent : CustomerAddressEvents
 customerBillingAddressEvent =
-    { street   = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput Street)))
-    , city     = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput City)))
-    , state    = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput State)))
+    { street = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput Street)))
+    , city = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput City)))
+    , state = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput State)))
     , postcode = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput PostCode)))
-    , country  = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput Country)))
+    , country = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput Country)))
     }
 
 

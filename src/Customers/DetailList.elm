@@ -83,7 +83,8 @@ customerList { customers, customersToShow, currentCustomerIndex, editableCustome
 
 
 
--- generate a function that takes a customer and returns (Html msg)
+-- generate a function that takes the possibly editable customer and
+--
 
 customerToHtmlFunction: Maybe Customer -> (Customer -> Html CView.Msg)
 customerToHtmlFunction editableCustomer =
@@ -204,7 +205,8 @@ update msg model =
                 -- TODO delegate to Edit Customer Sub Program
                 CView.Save customer ->
                     let
-                        -- Performance (Dict is better)
+                        -- Performance Issue (Dict is better than a full list scan!)
+                        --
                         updatedCustomers = List.map (\a ->
                                                       if a.id == customer.id then
                                                          model.editableCustomer
