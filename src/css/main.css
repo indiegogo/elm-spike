@@ -28,7 +28,7 @@ li {
 .bigLineHeight {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: 1 1 auto; 
 }
 
 .customer-list {
@@ -48,10 +48,10 @@ li {
 
 .customer-list li {
   background: white;
-  height:560px;
+  height:700px;
 }
 
-.customer-list li div {
+.customer-list li > * {
   width: inherit;
 }
 .customer {
@@ -65,7 +65,7 @@ li {
   text-transform: uppercase;
   border-bottom: 1px solid #dddddd;
   font-size: 12px;
-  line-height: 26px;
+  line-height: 16px;
 }
 .customer__detail {
   padding: 0 20px 20px 20px;
@@ -82,7 +82,8 @@ li {
 }
 
 .businessCard__line {
-  margin-bottom: 10px; 
+  margin-bottom: 10px;
+  line-height: 12px;
 }
 .businessCard--name {
   font-weight: bold;

@@ -10,14 +10,16 @@ import Window
 import Task
 import Debug as D
 import Array
+import Views.Customer as CView
 
 
 type alias Model =
-      { customers : List Customer
-      , errorMsg : String
-      , currentCustomerIndex : Int
-      , customersToShow : Int
-      , cardWidth : Int
+    { customers : List Customer
+    , errorMsg : String
+    , currentCustomerIndex : Int
+    , customersToShow : Int
+    , cardWidth : Int
+    , editableCustomer : Maybe Customer
     }
 
 
@@ -26,6 +28,7 @@ type Actions
     | Resize Window.Size
     | Next
     | Previous
+    | CustomerMsg CView.Msg
 
 
 main : Program Never Model Actions
@@ -40,7 +43,7 @@ main =
 
 initModel : Model
 initModel =
-    (Model [] "" 0 3 400)
+    (Model [] "" 0 3 400 Nothing)
 
 
 initCmd : Cmd Actions
@@ -58,17 +61,6 @@ init =
     )
 
 
-customerCardWidth : Model -> Int
-customerCardWidth =
-    .cardWidth
-
-
-customerStyle : Html.Attribute Actions
-customerStyle =
-    style
-        [ ( "width", (toString customerCardWidth) ++ "px" ) ]
-
-
 view : Model -> Html Actions
 view model =
     div [ class "customer-list" ]
@@ -76,76 +68,57 @@ view model =
         , ol [] (customerList model)
         , button [ onClick Next ] [ text "Next" ]
         ]
-info: Customer -> List(Html Actions)
-info customer =
-    [ div [ class "businessCard__line", class "businessCard--name" ] [ text customer.fullname ]
-    , div [ class "businessCard__line", class "businessCard--title" ] [ text customer.title ]
-    , div [ class "businessCard__line", class "businessCard--company" ] [ text customer.company ]
-    , div [ class "businessCard__line", class "businessCard--phone" ] [ text customer.company ]
-    , div [ class "businessCard__line", class "businessCard--email" ] [ text customer.birthday ]
-    ]
- 
-customerToHtml : Customer -> Html Actions
-customerToHtml customer =
-    li [ customerStyle, class "customer", class ("id-" ++ customer.id) ]
-        [ div [ class "businessCard" ]
-            [ img [ src customer.pictureUrl, class "picture" ] []
-            , div [ class "bigLineHeight", class "businessCard__info" ] (info customer)
-            ]
-        , div [ class "customer__detail" ]
-            [ viewCustomerAddress "Delivery Address" customer.deliveryAddress
-            , viewCustomerAddress "Billing Address" customer.billingAddress
-            , viewCustomerCreditCard customer.creditCard
-            ]
-        ]
 
-
-viewCustomerCreditCard : CustomerCreditCard -> Html msg
-viewCustomerCreditCard creditCard =
-    div []
-        [ div [ class "number" ] [ text creditCard.number ]
-        , div [ class "expDate" ] [ text creditCard.expDate ]
-        , div [ class "csv" ] [ text creditCard.csv ]
-        ]
-
-
-viewCustomerAddress : String -> CustomerAddress -> Html msg
-viewCustomerAddress label address =
-    div [] [
-         h3 [] [text label]
-    ,div [class "bigLineHeight"]
-        [ div [class "businessCard__line", class "street" ] [ text address.street ]
-        , div [class "businessCard__line", class "city" ] [ text address.city ]
-        , div [class "businessCard__line", class "state" ] [ text address.state ]
-        , div [class "businessCard__line", class "postcode" ] [ text address.postcode ]
-        , div [class "businessCard__line", class "country" ] [ text address.country ]
-        ]
-        ]
 
 customerList : Model -> List (Html Actions)
-customerList { customers, customersToShow, currentCustomerIndex } =
-    List.map customerToHtml <|
-        customerWindow
-            { customers = customers
-            , customersToShow = customersToShow
-            , currentCustomerIndex = currentCustomerIndex
-            }
+customerList { customers, customersToShow, currentCustomerIndex, editableCustomer } =
+    List.map (Html.map CustomerMsg)
+        (List.map (customerToHtmlFunction editableCustomer) <|
+            customerWindow
+                { customers = customers
+                , customersToShow = customersToShow
+                , currentCustomerIndex = currentCustomerIndex
+                }
+        )
+
+
+
+-- generate a function that takes a customer and returns (Html msg)
+
+customerToHtmlFunction: Maybe Customer -> (Customer -> Html CView.Msg)
+customerToHtmlFunction editableCustomer =
+    case editableCustomer of
+        Nothing ->
+            (\customer ->
+                CView.showView customer
+            )
+
+        Just editCustomer ->
+            (\customer ->
+                if editCustomer.id == customer.id then
+                    CView.editView editCustomer
+                else
+                    CView.showView customer
+            )
 
 
 subscriptions : Model -> Sub Actions
 subscriptions model =
     Window.resizes (\size -> Resize size)
 
+
+
 {-
--- this will divide by zero when it is defined
-unsafeFun =
-    let
-        start = 0
-        end   = 3
-        len   = List.length []
-    in
-        List.range start end |> List.map (\idx -> idx % len)
+   -- this will divide by zero when it is defined
+   unsafeFun =
+       let
+           start = 0
+           end   = 3
+           len   = List.length []
+       in
+           List.range start end |> List.map (\idx -> idx % len)
 -}
+
 
 customerWindow :
     { customers : List Customer
@@ -155,28 +128,29 @@ customerWindow :
     -> List Customer
 customerWindow { customers, customersToShow, currentCustomerIndex } =
     let
-        array = D.log "array" <|
+        array =
             Array.fromList customers
 
-        len = D.log "len" <|
+        len =
             List.length customers
 
-        start = D.log "start" <|
+        start =
             currentCustomerIndex
 
-        end = D.log "end" <|
+        end =
             currentCustomerIndex + customersToShow
 
         indexes =
             case len of
                 0 ->
                     List.range start end
+
                 _ ->
                     List.range start end |> List.map (\idx -> idx % len)
- 
-        lookup_customer_index indexPosition = D.log "lookup" (
+
+        lookup_customer_index indexPosition =
             Array.get indexPosition (Array.fromList indexes) |> Maybe.withDefault 0
-                                                             )
+
         lookup_customer customerPosition =
             Maybe.withDefault Customer.emptyModel
                 (Array.get
@@ -194,7 +168,7 @@ customerWindow { customers, customersToShow, currentCustomerIndex } =
 
 calcCustomersToShow : Model -> Window.Size -> Int
 calcCustomersToShow model { height, width } =
-    width // customerCardWidth model
+    width // model.cardWidth
 
 
 nextCustomerIndex : Model -> Int
@@ -202,14 +176,52 @@ nextCustomerIndex { currentCustomerIndex, customers } =
     (currentCustomerIndex + 1) % (List.length customers)
 
 
+
+-- % is not safe from divzero runtime (0.18 elm)
+
+
 prevCustomerIndex : Model -> Int
 prevCustomerIndex { currentCustomerIndex, customers } =
     (currentCustomerIndex - 1) % (List.length customers)
 
 
+
+-- % is not safe from divzero runtime (0.18 elm)
+
+
 update : Actions -> Model -> ( Model, Cmd Actions )
 update msg model =
     case msg of
+        CustomerMsg cmsg ->
+            case cmsg of
+                CView.Show customer ->
+                    ( { model | editableCustomer = Nothing }, Cmd.none )
+
+                -- TODO delegate to Edit Customer Sub Program
+                CView.Edit customer ->
+                    ( { model | editableCustomer = Just customer }, Cmd.none )
+
+                -- TODO delegate to Edit Customer Sub Program
+                CView.Save customer ->
+                    let
+                        -- Performance (Dict is better)
+                        updatedCustomers = List.map (\a ->
+                                                      if a.id == customer.id then
+                                                         model.editableCustomer
+                                                         |> Maybe.withDefault a
+                                                      else
+                                                          a
+                                                    ) model.customers
+                    in
+                        ( { model | editableCustomer = Nothing,
+                            customers = updatedCustomers }, Cmd.none )
+
+                -- TODO delegate to Edit Customer Sub Program
+                CView.Update event ->
+                    ( { model | editableCustomer = CView.update event model.editableCustomer }
+                    , Cmd.none
+                    )
+
         Next ->
             ( { model | currentCustomerIndex = nextCustomerIndex model }, Cmd.none )
 
