@@ -188,15 +188,15 @@ decodeServerValidate =
 
 
 
-getWithCred url body =
+postWithCred url body =
     Http.request
     { method = "POST"
-    , headers = [(Http.header "Access-Control-Allow-Origin" "http://locahost:3000"), (Http.header "Content-Type" "application/json")]
+    , headers = []
     , url = url
     , body = body
     , expect = Http.expectJson decodeServerValidate
     , timeout = Nothing
-    , withCredentials = False
+    , withCredentials = True -- send cookies
     }
 
 customerToBody customer =
@@ -205,7 +205,7 @@ customerToBody customer =
 -- todo server side validations
 checkServerSideValidation: Customer ->  Cmd Actions
 checkServerSideValidation customer =
-    Http.send Validation ( getWithCred "http://localhost:4000/api/validate/customer" (customerToBody customer))
+    Http.send Validation ( postWithCred "http://localhost:4000/api/validate/customer" (customerToBody customer))
 
 
 update : Actions -> Model -> ( Model, Cmd Actions )
