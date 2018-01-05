@@ -11,7 +11,7 @@ import Task
 import Debug as D
 import Array
 import Views.Customer as CView
-
+import Json.Decode as Decode
 
 type alias Model =
     { customers : List Customer
@@ -29,7 +29,7 @@ type Actions
     | Next
     | Previous
     | CustomerMsg CView.Msg
-
+    | Validation (Result Http.Error String)
 
 main : Program Never Model Actions
 main =
@@ -108,18 +108,16 @@ subscriptions model =
     Window.resizes (\size -> Resize size)
 
 
-
 {-
    -- this will divide by zero when it is defined
-   unsafeFun =
-       let
-           start = 0
-           end   = 3
-           len   = List.length []
-       in
-           List.range start end |> List.map (\idx -> idx % len)
+unsafeFun =
+    let
+        start = 0
+        end   = 3
+        len   = List.length []
+    in
+        List.range start end |> List.map (\idx -> idx % len)
 -}
-
 
 customerWindow :
     { customers : List Customer
@@ -172,6 +170,7 @@ calcCustomersToShow model { height, width } =
     width // model.cardWidth
 
 
+-- % is not safe from divzero runtime (0.18 elm)
 nextCustomerIndex : Model -> Int
 nextCustomerIndex { currentCustomerIndex, customers } =
     (currentCustomerIndex + 1) % (List.length customers)
@@ -179,20 +178,64 @@ nextCustomerIndex { currentCustomerIndex, customers } =
 
 
 -- % is not safe from divzero runtime (0.18 elm)
-
-
 prevCustomerIndex : Model -> Int
 prevCustomerIndex { currentCustomerIndex, customers } =
     (currentCustomerIndex - 1) % (List.length customers)
 
 
+decodeServerValidate =
+    Decode.at ["ok"] Decode.string
 
--- % is not safe from divzero runtime (0.18 elm)
+
+
+getWithCred url body =
+    Http.request
+    { method = "POST"
+    , headers = [(Http.header "Access-Control-Allow-Origin" "http://locahost:3000"), (Http.header "Content-Type" "application/json")]
+    , url = url
+    , body = body
+    , expect = Http.expectJson decodeServerValidate
+    , timeout = Nothing
+    , withCredentials = False
+    }
+
+customerToBody customer =
+    Http.emptyBody
+
+-- todo server side validations
+checkServerSideValidation: Customer ->  Cmd Actions
+checkServerSideValidation customer =
+    Http.send Validation ( getWithCred "http://localhost:4000/api/validate/customer" (customerToBody customer))
 
 
 update : Actions -> Model -> ( Model, Cmd Actions )
 update msg model =
     case msg of
+        Validation result ->
+            case result of
+                Ok str ->
+                    let
+                        a = Debug.log "str"
+                    in
+                        (model, Cmd.none)
+
+                Err httpError ->
+                    case httpError of
+                        Http.BadUrl a ->
+                            ( { model | errorMsg = a }, Cmd.none )
+
+                        Http.Timeout ->
+                            ( { model | errorMsg = "Timeout" }, Cmd.none )
+
+                        Http.NetworkError ->
+                            ( { model | errorMsg = "NetworkError" }, Cmd.none )
+
+                        Http.BadStatus a ->
+                            ( { model | errorMsg = toString a }, Cmd.none )
+
+                        Http.BadPayload a b ->
+                            ( { model | errorMsg = a ++ ":" ++ toString b }, Cmd.none )
+
         CustomerMsg cmsg ->
             case cmsg of
                 CView.Show customer ->
@@ -216,8 +259,9 @@ update msg model =
                                                     ) model.customers
                     in
                         ( { model | editableCustomer = Nothing,
-                            customers = updatedCustomers }, Cmd.none )
-
+                            customers = updatedCustomers },
+                            checkServerSideValidation (model.editableCustomer |> Maybe.withDefault customer)
+                        )
                 -- TODO delegate to Edit Customer Sub Program
                 CView.Update event ->
                     ( { model | editableCustomer = CView.update event model.editableCustomer }

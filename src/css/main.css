@@ -17,12 +17,14 @@ h1 {
 }
 
 img {
-  margin: 20px 0;
   max-width: 200px;
 }
 
 li {
   list-style-type: none;
+}
+input.invalid {
+  border: 1px solid red;
 }
 
 .bigLineHeight {
@@ -82,9 +84,10 @@ li {
 }
 
 .businessCard__line {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   line-height: 12px;
 }
+
 .businessCard--name {
   font-weight: bold;
 }
@@ -105,5 +108,4 @@ li {
   height: 150px;
   border-right: 1px solid #dddddd;
   padding-left: 20px;
-  padding-top: 20px;
 }

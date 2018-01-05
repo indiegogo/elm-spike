@@ -1,9 +1,11 @@
 module Views.Customer exposing (..)
 
 import Models.Customer exposing (Customer, CustomerAddress, CustomerCreditCard)
-import Html exposing (Html, div, text, li, ol, button, img, h3, input)
+import Html exposing (Html, div, text, li, ol, button, img, h3, input, label)
 import Html.Events exposing (onClick, onInput)
 import Html.Attributes exposing (class, style, src, value)
+import Validate exposing (ifBlank, ifNotInt, Validator)
+import Dict
 
 
 type CustomerEvent
@@ -33,6 +35,11 @@ type EditEvent
     | CreditCardEdit CreditCardEvent
     | BillingAddressEdit AddressEvent
     | DeliveryAddressEdit AddressEvent
+    | NoOp String
+
+
+
+-- used to work around dict maybe
 
 
 type Msg
@@ -40,31 +47,6 @@ type Msg
     | Show Customer
     | Save Customer
     | Update EditEvent
-
-
-type alias CustomerEvents =
-    { fullname : Html.Attribute Msg
-    , phone : Html.Attribute Msg
-    , title : Html.Attribute Msg
-    , company : Html.Attribute Msg
-    , birthday : Html.Attribute Msg
-    }
-
-
-type alias CustomerAddressEvents =
-    { street : Html.Attribute Msg
-    , city : Html.Attribute Msg
-    , state : Html.Attribute Msg
-    , postcode : Html.Attribute Msg
-    , country : Html.Attribute Msg
-    }
-
-
-type alias CustomerCreditCardEvents =
-    { number : Html.Attribute Msg
-    , expDate : Html.Attribute Msg
-    , csv : Html.Attribute Msg
-    }
 
 
 update : EditEvent -> Maybe Customer -> Maybe Customer
@@ -75,6 +57,9 @@ update msg maybeModel =
 
         Just model ->
             case msg of
+                NoOp v ->
+                    maybeModel
+
                 CreditCardEdit evt ->
                     let
                         creditCard =
@@ -150,50 +135,161 @@ update msg maybeModel =
                             Just { model | company = str }
 
 
-customerCreditCardEvent : CustomerCreditCardEvents
-customerCreditCardEvent =
-    { number = (Html.Attributes.map Update (Html.Attributes.map CreditCardEdit (onInput Number)))
-    , expDate = (Html.Attributes.map Update (Html.Attributes.map CreditCardEdit (onInput ExpDate)))
-    , csv = (Html.Attributes.map Update (Html.Attributes.map CreditCardEdit (onInput Csv)))
-    }
+type alias FieldEntry =
+    ( Html.Attribute Msg
+    , List (Validator String String)
+    , -- this function declaration is the weak part of my design
+      -- as it hinges on the fact that input fields operate on
+      --- String values and so the model field types are all strings
+      Customer -> String
+    )
 
 
-customerBillingAddressEvent : CustomerAddressEvents
-customerBillingAddressEvent =
-    { street = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput Street)))
-    , city = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput City)))
-    , state = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput State)))
-    , postcode = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput PostCode)))
-    , country = (Html.Attributes.map Update (Html.Attributes.map BillingAddressEdit (onInput Country)))
-    }
+type alias EventDict =
+    Dict.Dict String FieldEntry
 
 
-customerDeliveryAddressEvent : CustomerAddressEvents
-customerDeliveryAddressEvent =
-    { street = (Html.Attributes.map Update (Html.Attributes.map DeliveryAddressEdit (onInput Street)))
-    , city = (Html.Attributes.map Update (Html.Attributes.map DeliveryAddressEdit (onInput City)))
-    , state = (Html.Attributes.map Update (Html.Attributes.map DeliveryAddressEdit (onInput State)))
-    , postcode = (Html.Attributes.map Update (Html.Attributes.map DeliveryAddressEdit (onInput PostCode)))
-    , country = (Html.Attributes.map Update (Html.Attributes.map DeliveryAddressEdit (onInput Country)))
-    }
+
+-- pair generate shorthand
 
 
-customerEvents : CustomerEvents
+(=>) =
+    (,)
+
+
+routeToUpdateInput : (msg -> EditEvent) -> (String -> msg) -> Html.Attribute Msg
+routeToUpdateInput editEvent msg =
+    (Html.Attributes.map Update (Html.Attributes.map editEvent (onInput msg)))
+
+
+customerCreditCardEvents : EventDict
+customerCreditCardEvents =
+    Dict.fromList
+        [ "number"
+            => ( routeToUpdateInput CreditCardEdit Number
+               , [ ifNotInt "Must Be Number", cannotBeBlank ]
+               , .creditCard >> .number
+               )
+        , "expDate"
+            => ( routeToUpdateInput CreditCardEdit ExpDate
+               , [ cannotBeBlank ]
+               , .creditCard >> .expDate
+               )
+        , "csv"
+            => ( routeToUpdateInput CreditCardEdit Csv
+               , [ ifNotInt "Must be Number", cannotBeBlank ]
+               , .creditCard >> .csv
+               )
+        ]
+
+
+customerBillingAddressEvents : EventDict
+customerBillingAddressEvents =
+    Dict.fromList
+        [ "street"
+            => ( routeToUpdateInput BillingAddressEdit Street
+               , [ cannotBeBlank ]
+               , .deliveryAddress >> .street
+               )
+        , "city"
+            => ( routeToUpdateInput BillingAddressEdit City
+               , [ cannotBeBlank ]
+               , .deliveryAddress >> .city
+               )
+        , "state"
+            => ( routeToUpdateInput BillingAddressEdit State
+               , [ cannotBeBlank ]
+               , .deliveryAddress >> .state
+               )
+        , "postcode"
+            => ( routeToUpdateInput BillingAddressEdit PostCode
+               , [ cannotBeBlank ]
+               , .deliveryAddress >> .postcode
+               )
+        , "country"
+            => ( routeToUpdateInput BillingAddressEdit Country
+               , [ cannotBeBlank ]
+               , .deliveryAddress >> .country
+               )
+        ]
+
+
+customerDeliveryAddressEvents : EventDict
+customerDeliveryAddressEvents =
+    Dict.fromList
+        [ "street"
+            => ( routeToUpdateInput DeliveryAddressEdit Street
+               , [ cannotBeBlank ]
+               , .deliveryAddress >> .street
+               )
+        , "city"
+            => ( routeToUpdateInput DeliveryAddressEdit City
+               , [ cannotBeBlank ]
+               , .deliveryAddress >> .city
+               )
+        , "state"
+            => ( routeToUpdateInput DeliveryAddressEdit State
+               , [ cannotBeBlank ]
+               , .deliveryAddress >> .state
+               )
+        , "postcode"
+            => ( routeToUpdateInput DeliveryAddressEdit PostCode
+               , [ cannotBeBlank ]
+               , .deliveryAddress >> .postcode
+               )
+        , "country"
+            => ( routeToUpdateInput DeliveryAddressEdit Country
+               , [ cannotBeBlank ]
+               , .deliveryAddress >> .country
+               )
+        ]
+
+
+customerEvents : EventDict
 customerEvents =
-    { fullname = (Html.Attributes.map Update (Html.Attributes.map CustomerEdit (onInput Fullname)))
-    , phone = (Html.Attributes.map Update (Html.Attributes.map CustomerEdit (onInput Phone)))
-    , title = (Html.Attributes.map Update (Html.Attributes.map CustomerEdit (onInput Title)))
-    , company = (Html.Attributes.map Update (Html.Attributes.map CustomerEdit (onInput Company)))
-    , birthday = (Html.Attributes.map Update (Html.Attributes.map CustomerEdit (onInput Birthday)))
-    }
+    Dict.fromList
+        [ "fullname"
+            => ( routeToUpdateInput CustomerEdit Fullname
+               , [ cannotBeBlank ]
+               , .fullname
+               )
+        , "phone"
+            => ( routeToUpdateInput CustomerEdit Phone
+               , [ cannotBeBlank ]
+               , .phone
+               )
+        , "title"
+            => ( routeToUpdateInput CustomerEdit Title
+               , [ cannotBeBlank ]
+               , .title
+               )
+        , "company"
+            => ( routeToUpdateInput CustomerEdit Company
+               , [ cannotBeBlank ]
+               , .company
+               )
+        , "birthday"
+            => ( routeToUpdateInput CustomerEdit Birthday
+               , [ cannotBeBlank ]
+               , .birthday
+               )
+        ]
+
+noOp =
+    (Html.Attributes.map Update (onInput NoOp))
+
+
+cannotBeBlank : Validator String String
+cannotBeBlank =
+    ifBlank "Cannot Be Blank"
 
 
 type alias HtmlFunction =
     List (Html.Attribute Msg) -> List (Html.Html Msg) -> Html Msg
 
 
-type alias InputMapperFunction a b =
-    List (Html.Attribute Msg) -> (a -> String) -> (b -> Html.Attribute Msg) -> Html Msg
+type alias InputMapperFunction =
+    List (Html.Attribute Msg) -> String -> Html Msg
 
 
 editInfo : Customer -> List (Html Msg)
@@ -206,23 +302,53 @@ showInfo customer =
     info (modelShowInputMapper customer customerEvents)
 
 
-modelShowInputMapper : a -> b -> InputMapperFunction a b
-modelShowInputMapper model events attrs dataAccessFunc eventFunc =
-    div attrs [ text (dataAccessFunc model) ]
+modelShowInputMapper : Customer -> EventDict -> InputMapperFunction
+modelShowInputMapper model events attrs eventKey =
+    let
+        ( _, _, dataAccessFunc ) =
+            lookupEvent eventKey events
+    in
+        div attrs [ text (dataAccessFunc model) ]
 
 
-modelEditInputMapper : a -> b -> InputMapperFunction a b
-modelEditInputMapper model events attrs dataAccessFunc eventFunc =
-    input (attrs ++ [ value (dataAccessFunc model), eventFunc events ]) []
+defaultNonOperationFieldEntry : String -> FieldEntry
+defaultNonOperationFieldEntry key =
+    ( noOp, [ cannotBeBlank ], (\_ -> "bad key used in form event spec: " ++ key) )
 
 
-info : InputMapperFunction Customer CustomerEvents -> List (Html Msg)
+lookupEvent : String -> EventDict -> FieldEntry
+lookupEvent key dict =
+    Dict.get key dict |> Maybe.withDefault (defaultNonOperationFieldEntry key)
+
+
+modelEditInputMapper : Customer -> EventDict -> InputMapperFunction
+modelEditInputMapper model events attrs eventKey =
+    let
+        ( eventHandler, validations, dataAccessFunc ) =
+            lookupEvent eventKey events
+
+        fieldValue =
+            dataAccessFunc model
+
+        validClass =
+            if Validate.any validations fieldValue then
+                ""
+            else
+                "invalid"
+    in
+        div []
+            [ label [ style [ ( "display", "none" ) ] ] [ text (toString (Validate.all validations fieldValue)) ]
+            , input (attrs ++ [ value fieldValue, eventHandler, class validClass ]) []
+            ]
+
+
+info : InputMapperFunction -> List (Html Msg)
 info htmlFunc =
-    [ htmlFunc [ class "businessCard__line", class "businessCard--name" ] .fullname .fullname
-    , htmlFunc [ class "businessCard__line", class "businessCard--title" ] .title .title
-    , htmlFunc [ class "businessCard__line", class "businessCard--company" ] .company .company
-    , htmlFunc [ class "businessCard__line", class "businessCard--phone" ] .phone .phone
-    , htmlFunc [ class "businessCard__line", class "businessCard--email" ] .birthday .birthday
+    [ htmlFunc [ class "businessCard__line", class "businessCard--name" ] "fullname"
+    , htmlFunc [ class "businessCard__line", class "businessCard--title" ] "title"
+    , htmlFunc [ class "businessCard__line", class "businessCard--company" ] "company"
+    , htmlFunc [ class "businessCard__line", class "businessCard--phone" ] "phone"
+    , htmlFunc [ class "businessCard__line", class "businessCard--email" ] "birthday"
     ]
 
 
@@ -235,71 +361,99 @@ showView customer =
             , div [ class "bigLineHeight", class "businessCard__info" ] (showInfo customer)
             ]
         , div [ class "customer__detail" ]
-            [ showCustomerAddress "Delivery Address" customer.deliveryAddress customerDeliveryAddressEvent
-            , showCustomerCreditCard customer.creditCard customerCreditCardEvent
-            , showCustomerAddress "Billing Address" customer.billingAddress customerBillingAddressEvent
+            [ showCustomerAddress "Delivery Address" customer customerDeliveryAddressEvents
+            , showCustomerCreditCard customer customerCreditCardEvents
+            , showCustomerAddress "Billing Address" customer customerBillingAddressEvents
             ]
         ]
+
+
+validateCustomer : Customer -> Bool
+validateCustomer customer =
+    let
+        convertDictToValidation dict =
+            Dict.values dict
+                |> List.map
+                    (\( _, validations, dataAccessFunc ) ->
+                        Validate.any validations (dataAccessFunc customer)
+                    )
+
+        validationList =
+            (List.concatMap convertDictToValidation
+                [ customerEvents, customerBillingAddressEvents, customerDeliveryAddressEvents, customerCreditCardEvents ]
+            )
+    in
+        -- in the validation of all the fields overall -> are there any False validations?
+        -- if so it is not valid
+        validationList |> List.any (\a -> a == False) |> not
+
+
+showSaveButtonIfValid : Customer -> Html Msg
+showSaveButtonIfValid customer =
+    if validateCustomer customer then
+        div [ onClick (Save customer), class "material-icons" ] [ text "save" ]
+    else
+        div [] []
 
 
 editView : Customer -> Html Msg
 editView customer =
     li [ class "customer", class ("id-" ++ customer.id) ]
         [ div [ onClick (Show customer), class "material-icons" ] [ text "cancel" ]
-        , div [ onClick (Save customer), class "material-icons" ] [ text "save" ]
+        , showSaveButtonIfValid customer
         , div [ class "businessCard" ]
             [ img [ src customer.pictureUrl, class "picture" ] []
             , div [ class "bigLineHeight", class "businessCard__info" ] (editInfo customer)
             ]
         , div [ class "customer__detail" ]
-            [ editCustomerAddress "Delivery Address" customer.deliveryAddress customerDeliveryAddressEvent
-            , editCustomerCreditCard customer.creditCard customerCreditCardEvent
-            , editCustomerAddress "Billing Address" customer.billingAddress customerBillingAddressEvent
+            [ editCustomerAddress "Delivery Address" customer customerDeliveryAddressEvents
+            , editCustomerCreditCard customer customerCreditCardEvents
+            , editCustomerAddress "Billing Address" customer customerBillingAddressEvents
             ]
         ]
 
 
-showCustomerCreditCard : CustomerCreditCard -> CustomerCreditCardEvents -> Html Msg
-showCustomerCreditCard customerCard customerAddressEvents =
-    viewCustomerCreditCard (modelShowInputMapper customerCard customerAddressEvents)
+showCustomerCreditCard : Customer -> EventDict -> Html Msg
+showCustomerCreditCard customer customerAddressEvents =
+    viewCustomerCreditCard (modelShowInputMapper customer customerAddressEvents)
 
 
-editCustomerCreditCard : CustomerCreditCard -> CustomerCreditCardEvents -> Html Msg
-editCustomerCreditCard customerCard customerAddressEvents =
-    viewCustomerCreditCard (modelEditInputMapper customerCard customerAddressEvents)
+editCustomerCreditCard : Customer -> EventDict -> Html Msg
+editCustomerCreditCard customer customerAddressEvents =
+    viewCustomerCreditCard (modelEditInputMapper customer customerAddressEvents)
 
 
-viewCustomerCreditCard : InputMapperFunction CustomerCreditCard CustomerCreditCardEvents -> Html Msg
+viewCustomerCreditCard : InputMapperFunction -> Html Msg
 viewCustomerCreditCard htmlFunc =
     div []
         [ h3 [] [ text "Billing Information" ]
         , div [ class "bigLineHeight" ]
-            [ htmlFunc [ class "number" ] .number .number
-            , htmlFunc [ class "expDate" ] .expDate .expDate
-            , htmlFunc [ class "csv" ] .csv .csv
+            [ htmlFunc [ class "number" ] "number"
+            , htmlFunc [ class "expDate" ] "expDate"
+            , htmlFunc [ class "csv" ] "csv"
             ]
         ]
 
 
-showCustomerAddress : String -> CustomerAddress -> CustomerAddressEvents -> Html Msg
-showCustomerAddress label address addressEvents =
-    viewCustomerAddress (modelShowInputMapper address addressEvents) label
+showCustomerAddress : String -> Customer -> EventDict -> Html Msg
+showCustomerAddress label customer addressEvents =
+    viewCustomerAddress (modelShowInputMapper customer addressEvents) label
 
 
-editCustomerAddress : String -> CustomerAddress -> CustomerAddressEvents -> Html Msg
-editCustomerAddress label address addressEvents =
-    viewCustomerAddress (modelEditInputMapper address addressEvents) label
+editCustomerAddress : String -> Customer -> EventDict -> Html Msg
+editCustomerAddress label customer addressEvents =
+    viewCustomerAddress (modelEditInputMapper customer addressEvents) label
 
 
-viewCustomerAddress : InputMapperFunction CustomerAddress CustomerAddressEvents -> String -> Html Msg
+viewCustomerAddress : InputMapperFunction -> String -> Html Msg
 viewCustomerAddress htmlFunc label =
     div []
         [ h3 [] [ text label ]
         , div [ class "bigLineHeight" ]
-            [ htmlFunc [ class "businessCard__line", class "street" ] .street .street
-            , htmlFunc [ class "businessCard__line", class "city" ] .city .city
-            , htmlFunc [ class "businessCard__line", class "state" ] .state .state
-            , htmlFunc [ class "businessCard__line", class "postcode" ] .postcode .postcode
-            , htmlFunc [ class "businessCard__line", class "country" ] .country .country
+            [ htmlFunc [ class "businessCard__line", class "street" ] "street"
+            , htmlFunc [ class "businessCard__line", class "city" ] "city"
+            , htmlFunc [ class "businessCard__line", class "state" ] "state"
+            , htmlFunc [ class "businessCard__line", class "postcode" ] "postcode"
+            , htmlFunc [ class "businessCard__line", class "country" ] "country"
             ]
         ]
