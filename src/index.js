@@ -1,5 +1,10 @@
 import './css/normalize.css';
 import './css/main.css';
+import '../public/assets/firebase.js'
+import '../public/assets/firebase.setup.js'
+import '../public/assets/firebase.auth.js'
+import '../public/assets/firebase.db.js'
+
 import { Main } from './Main.elm';
 import registerServiceWorker from './registerServiceWorker';
 
