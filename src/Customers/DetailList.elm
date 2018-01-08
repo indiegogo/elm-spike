@@ -203,9 +203,13 @@ customerToBody customer =
     Http.emptyBody
 
 -- todo server side validations
-checkServerSideValidation: Customer ->  Cmd Actions
-checkServerSideValidation customer =
-    Http.send Validation ( postWithCred "http://localhost:4000/api/validate/customer" (customerToBody customer))
+checkServerSideValidation: Maybe Customer ->  Cmd Actions
+checkServerSideValidation maybeCustomer =
+    case maybeCustomer of
+        Nothing ->
+            Cmd.none
+        Just customer ->
+            Http.send Validation ( postWithCred "http://localhost:4000/api/validate/customer" (customerToBody customer))
 
 
 update : Actions -> Model -> ( Model, Cmd Actions )
@@ -260,7 +264,7 @@ update msg model =
                     in
                         ( { model | editableCustomer = Nothing,
                             customers = updatedCustomers },
-                            checkServerSideValidation (model.editableCustomer |> Maybe.withDefault customer)
+                            checkServerSideValidation model.editableCustomer
                         )
                 -- TODO delegate to Edit Customer Sub Program
                 CView.Update event ->
