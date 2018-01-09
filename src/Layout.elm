@@ -171,10 +171,10 @@ view model =
 tabSet =
     [ ( 0, "SignIn", "signIn", .signInModel >> SignInView.view >> Html.map SignInPage )
     , ( 1, "Customers", "cust", .customersModel >> CustomersView.view >> Html.map CustomersPage )
+    , ( 1, "Detail List", "details", .detailsModel >> CustomersDetailView.view >> Html.map CustomersDetailListPage )
     , ( 1, "Orders", "ord", .ordersModel >> EmptyView.view >> Html.map EmptyPage )
     , ( 1, "Inventory", "inv", .inventoryModel >> EmptyView.view >> Html.map EmptyPage )
     , ( 1, "DB Test", "db", .dbModel >> FirebaseDB.view >> Html.map FirebaseDBPage )
-    , ( 1, "Detail List", "details", .detailsModel >> CustomersDetailView.view >> Html.map CustomersDetailListPage )
     ]
 
 
