@@ -9,14 +9,13 @@ import Material.Typography as Typography
 import Firebase.DB
 import Debug as D exposing (log)
 import Models.Customer exposing(Customer)
-
+import Dict
 type alias Model =
     { dbModel : Firebase.DB.Model
     }
 
 
-type Msg
-    = CustomerDB Firebase.DB.Msg
+type Msg = Msg
 
 
 initModel : Model
@@ -70,7 +69,7 @@ contentStyle =
 view : Model -> Html Msg
 view model =
     div [ contentStyle ]
-        (List.map (\customer -> anMdlCard customer) model.dbModel.all)
+        (List.map (\customer -> anMdlCard customer) (model.dbModel.customersById |> Dict.values))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -85,21 +84,8 @@ update msg model =
         c =
             D.log "Customers.update" "Customers.update"
     in
-        case msg of
-            CustomerDB msg ->
-                let
-                    next =
-                        Firebase.DB.update msg model.dbModel
-
-                    dbModel =
-                        Tuple.first next
-
-                    cmd =
-                        Cmd.map CustomerDB <| Tuple.second next
-                in
-                    ( { model | dbModel = dbModel }, cmd )
-
+        (model, Cmd.none)
 
 subscriptions : Model -> Sub Msg
 subscriptions m =
-    Sub.map CustomerDB (Firebase.DB.subscriptions m.dbModel)
+    Sub.none

@@ -16,7 +16,6 @@ import Customers.Grid
 import Customers.DetailList
 import Html exposing (Html)
 
-
 type alias EmptyModel =
     {}
 
@@ -146,7 +145,10 @@ update msg model =
                     cmd =
                         Cmd.map FirebaseDBPage <| Tuple.second next
                 in
-                    ( { model | dbModel = dbModel }, cmd )
+                    ( { model | dbModel = dbModel
+                                , detailsModel = ({model.detailsModel   | dbModel = dbModel })
+                                , detailsModel = ({model.customersModel | dbModel = dbModel })
+                      }, cmd )
 
 
 view : Model -> Html Msg

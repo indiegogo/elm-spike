@@ -23,22 +23,22 @@ import Json.Decode as Decode
 import Json.Encode
 import Json.Decode
 import Json.Decode.Pipeline as DecodePipeline
-
-import Models.Customer exposing(Customer, decodeCustomerList, encodeCustomerList)
-
+import Models.Customer exposing (Customer, decodeCustomerList, encodeCustomerList)
 import Http
+
 
 -- elm-package install -- yes noredink/elm-decode-pipeline
 
 import Json.Decode.Pipeline
 import Utils.RandomUser as RandomUser
+import Models.Customer as MCustomer
+import Dict
 
 
 port toFirebaseDB : ( String, Maybe Value ) -> Cmd msg
 
 
 port fromFirebaseDB : (Value -> msg) -> Sub msg
-
 
 
 type FirebaseMsg
@@ -49,7 +49,7 @@ type FirebaseMsg
 
 
 type Msg
-    = SetCustomerList (List Customer)
+    = SetCustomers MCustomer.CustomersById
     | FirebaseErrorMessage String
     | UI FirebaseMsg
     | RandomUsersMeResponse (Result Http.Error RandomUser.RandomUserMe)
@@ -58,7 +58,7 @@ type Msg
 
 type alias Model =
     { dbMsg : String
-    , all : List Customer
+    , customersById : MCustomer.CustomersById
     , importAmount : String
     }
 
@@ -67,7 +67,7 @@ main : Program Never Model Msg
 main =
     Html.program
         { init = init
-        , view = view 
+        , view = view
         , update = update
         , subscriptions = subscriptions
         }
@@ -75,7 +75,7 @@ main =
 
 initModel : Model
 initModel =
-    { all = []
+    { customersById = MCustomer.emptyCustomersById
     , dbMsg = ""
     , importAmount = "10"
     }
@@ -86,15 +86,20 @@ init =
     ( initModel, Cmd.none )
 
 
+customerCount : Model -> Int
+customerCount model =
+    List.length (Dict.keys model.customersById)
+
+
 view : Model -> Html.Html Msg
 view model =
     Html.div []
-        [ Html.text <| "Customers " ++ (toString <| List.length model.all)
+        [ Html.text <| "Customers " ++ (toString <| customerCount model)
         , Html.input [ Html.Events.onInput UpdateImportAmount, Html.Attributes.value model.importAmount ] []
         , Html.button [ buttonStyle, Html.Events.onClick (UI FetchRandomCustomers) ] [ Html.text "Import Customers from RandomUser.me" ]
-        , Html.button [ buttonStyle, Html.Events.onClick (UI (DeleteCustomer  "")) ] [ Html.text "Delete All" ]
+        , Html.button [ buttonStyle, Html.Events.onClick (UI (DeleteCustomer "")) ] [ Html.text "Delete All" ]
         , viewDbMsg model
-        , viewCustomers model.all
+        , viewCustomers <| Dict.values model.customersById
         ]
 
 
@@ -165,8 +170,8 @@ update msg model =
                             Http.BadPayload a b ->
                                 ( { model | dbMsg = a ++ ":" ++ toString b }, Cmd.none )
 
-        SetCustomerList all ->
-            ( { model | all = all }, Cmd.none )
+        SetCustomers customersById ->
+            ( { model | customersById = customersById }, Cmd.none )
 
         FirebaseErrorMessage lastUpdateMessage ->
             ( { model | dbMsg = lastUpdateMessage }, Cmd.none )
@@ -197,42 +202,43 @@ subscriptions _ =
     fromFirebaseDB decodeFirebaseDBValue
 
 
-
-
 type alias FirebaseEvent =
     { event : String
-      , value : Value
+    , value : Value
     }
+
 
 decodeFirebaseEvent : Json.Decode.Decoder FirebaseEvent
 decodeFirebaseEvent =
     Json.Decode.Pipeline.decode FirebaseEvent
         |> Json.Decode.Pipeline.required "event" (Json.Decode.string)
-        |> Json.Decode.Pipeline.required "value" (Json.Decode.value) 
+        |> Json.Decode.Pipeline.required "value" (Json.Decode.value)
 
-eventToMsg: Result String FirebaseEvent -> Msg
+
+eventToMsg : Result String FirebaseEvent -> Msg
 eventToMsg result =
     case result of
         Err string ->
             FirebaseErrorMessage ("EventMapping Error :" ++ string)
-        Ok {event, value} ->
-            case event of 
+
+        Ok { event, value } ->
+            case event of
                 "customer_list" ->
                     let
                         result =
                             Decode.decodeValue decodeCustomerList value
                     in
-                    case result of
-                        Ok thing ->
-                           SetCustomerList thing
+                        case result of
+                            Ok customerList ->
+                                SetCustomers (MCustomer.customersByIdFromList customerList)
 
-                        Err msg ->
-                           FirebaseErrorMessage ("CustomerList Value Error :" ++ toString msg)
+                            Err msg ->
+                                FirebaseErrorMessage ("CustomerList Value Error :" ++ toString msg)
+
                 _ ->
                     FirebaseErrorMessage ("Unknown event :" ++ event)
 
 
 decodeFirebaseDBValue : Value -> Msg
 decodeFirebaseDBValue v =
-   (eventToMsg (Decode.decodeValue decodeFirebaseEvent v))
-
+    (eventToMsg (Decode.decodeValue decodeFirebaseEvent v))

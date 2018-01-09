@@ -5,17 +5,9 @@ import Json.Decode as Decode
 import Json.Encode
 import Json.Decode
 import Json.Decode.Pipeline as DecodePipeline
+import Dict
 
 
-emptyModel: Customer
-emptyModel =
-    Customer "" "" "" "" "" "" "" ""
-        (CustomerAddress "" "" "" "" "")
-        (CustomerAddress "" "" "" "" "")
-        (CustomerCreditCard "" "" "")
-
-
-type alias CustomerList = List (Customer)
 
 type alias Customer =
     { pictureUrl : String
@@ -45,6 +37,27 @@ type alias CustomerAddress =
     , postcode : String
     , country : String
     }
+
+
+type alias CustomersById = Dict.Dict String Customer
+type alias CustomerList = List (Customer)
+
+emptyCustomer: Customer
+emptyCustomer =
+    Customer "" "" "" "" "" "" "" ""
+        (CustomerAddress "" "" "" "" "")
+        (CustomerAddress "" "" "" "" "")
+        (CustomerCreditCard "" "" "")
+
+emptyCustomersById : CustomersById
+emptyCustomersById =
+    Dict.empty
+
+customersByIdFromList :List Customer -> CustomersById
+customersByIdFromList list =
+    -- use map 2 to zip two lists together with (,)
+    -- making  [ (comparableKey, value), ... ]
+    Dict.fromList <| List.map2 (,) (List.map (\c -> c.id) list) list
 
 
 decodeCustomerList : Decode.Decoder CustomerList

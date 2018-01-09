@@ -12,14 +12,17 @@ import Debug as D
 import Array
 import Views.Customer as CView
 import Json.Decode as Decode
+import Firebase.DB
+import Dict
 
 type alias Model =
-    { customers : List Customer
-    , errorMsg : String
+    {
+     errorMsg : String
     , currentCustomerIndex : Int
     , customersToShow : Int
     , cardWidth : Int
     , editableCustomer : Maybe Customer
+    , dbModel : Firebase.DB.Model
     }
 
 
@@ -31,34 +34,19 @@ type Actions
     | CustomerMsg CView.Msg
     | Validation (Result Http.Error String)
 
-main : Program Never Model Actions
-main =
-    Html.program
-        { init = init
-        , view = view
-        , subscriptions = subscriptions
-        , update = update
-        }
-
 
 initModel : Model
 initModel =
-    (Model [] "" 0 3 400 Nothing)
+    (Model "" 0 3 400 Nothing Firebase.DB.initModel)
 
 
 initCmd : Cmd Actions
 initCmd =
     Cmd.batch
-        [ importFromRandomUserMeWithSeed ImportCustomers "10" "abc123-seed"
-        , Task.perform Resize Window.size
+        [
+         --  importFromRandomUserMeWithSeed ImportCustomers "10" "abc123-seed"
+         Task.perform Resize Window.size
         ]
-
-
-init : ( Model, Cmd Actions )
-init =
-    ( initModel
-    , initCmd
-    )
 
 
 view : Model -> Html Actions
@@ -71,11 +59,11 @@ view model =
 
 
 customerList : Model -> List (Html Actions)
-customerList { customers, customersToShow, currentCustomerIndex, editableCustomer } =
+customerList { customersToShow, currentCustomerIndex, editableCustomer, dbModel } =
     List.map (Html.map CustomerMsg)
         (List.map (customerToHtmlFunction editableCustomer) <|
             customerWindow
-                { customers = customers
+                { customers = Dict.values dbModel.customersById
                 , customersToShow = customersToShow
                 , currentCustomerIndex = currentCustomerIndex
                 }
@@ -151,7 +139,7 @@ customerWindow { customers, customersToShow, currentCustomerIndex } =
             Array.get indexPosition (Array.fromList indexes) |> Maybe.withDefault 0
 
         lookup_customer customerPosition =
-            Maybe.withDefault Customer.emptyModel
+            Maybe.withDefault Customer.emptyCustomer
                 (Array.get
                     (lookup_customer_index customerPosition)
                     array
@@ -169,18 +157,20 @@ calcCustomersToShow : Model -> Window.Size -> Int
 calcCustomersToShow model { height, width } =
     width // model.cardWidth
 
+lengthOfCustomers {customersById} =
+    List.length <| Dict.values customersById
 
 -- % is not safe from divzero runtime (0.18 elm)
 nextCustomerIndex : Model -> Int
-nextCustomerIndex { currentCustomerIndex, customers } =
-    (currentCustomerIndex + 1) % (List.length customers)
+nextCustomerIndex { currentCustomerIndex, dbModel } =
+    (currentCustomerIndex + 1) % (lengthOfCustomers dbModel)
 
 
 
 -- % is not safe from divzero runtime (0.18 elm)
 prevCustomerIndex : Model -> Int
-prevCustomerIndex { currentCustomerIndex, customers } =
-    (currentCustomerIndex - 1) % (List.length customers)
+prevCustomerIndex { currentCustomerIndex, dbModel } =
+    (currentCustomerIndex - 1) % (lengthOfCustomers dbModel)
 
 
 decodeServerValidate =
@@ -252,6 +242,9 @@ update msg model =
                 -- TODO delegate to Edit Customer Sub Program
                 CView.Save customer ->
                     let
+                        dbModel = model.dbModel
+                        customersById = dbModel.customersById
+
                         -- Performance Issue (Dict is better than a full list scan!)
                         --
                         updatedCustomers = List.map (\a ->
@@ -260,11 +253,13 @@ update msg model =
                                                          |> Maybe.withDefault a
                                                       else
                                                           a
-                                                    ) model.customers
+                                                    ) model.dbModel.cust
+
                     in
-                        ( { model | editableCustomer = Nothing,
-                            customers = updatedCustomers },
-                            checkServerSideValidation model.editableCustomer
+                        ( { model | editableCustomer = Nothing
+                          ,dbModel = ( { dbModel | customersById = updatedCustomers } )
+                          }
+                          , (checkServerSideValidation model.editableCustomer)
                         )
                 -- TODO delegate to Edit Customer Sub Program
                 CView.Update event ->
