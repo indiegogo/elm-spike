@@ -1,4 +1,4 @@
-module Customers.Grid exposing (Model, Msg, view, update, subscriptions, initModel)
+module Customers.Grid exposing ( Msg, view, update, subscriptions)
 
 import Html exposing (Html, text, div)
 import Html.Attributes exposing (style)
@@ -9,20 +9,10 @@ import Material.Typography as Typography
 import Firebase.DB
 import Debug as D exposing (log)
 import Models.Customer exposing(Customer)
-
-type alias Model =
-    { dbModel : Firebase.DB.Model
-    }
+import Dict
 
 
-type Msg
-    = CustomerDB Firebase.DB.Msg
-
-
-initModel : Model
-initModel =
-    { dbModel = Firebase.DB.initModel
-    }
+type Msg = Msg
 
 
 white : Options.Property c m
@@ -67,13 +57,11 @@ contentStyle =
         ]
 
 
-view : Model -> Html Msg
 view model =
     div [ contentStyle ]
-        (List.map (\customer -> anMdlCard customer) model.dbModel.all)
+        (List.map (\customer -> anMdlCard customer) (model.customersById |> Dict.values))
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         a =
@@ -85,21 +73,7 @@ update msg model =
         c =
             D.log "Customers.update" "Customers.update"
     in
-        case msg of
-            CustomerDB msg ->
-                let
-                    next =
-                        Firebase.DB.update msg model.dbModel
+        (model, Cmd.none)
 
-                    dbModel =
-                        Tuple.first next
-
-                    cmd =
-                        Cmd.map CustomerDB <| Tuple.second next
-                in
-                    ( { model | dbModel = dbModel }, cmd )
-
-
-subscriptions : Model -> Sub Msg
 subscriptions m =
-    Sub.map CustomerDB (Firebase.DB.subscriptions m.dbModel)
+    Sub.none

@@ -1,11 +1,12 @@
 port module Firebase.DB
     exposing
-        ( main
-        , initModel
+        ( 
+         initModel
         , update
         , view
         , subscriptions
         , Msg(UI)
+        , ExternalMsg(..)
         , FirebaseMsg(CustomerList)
         , Model
         )
@@ -23,22 +24,22 @@ import Json.Decode as Decode
 import Json.Encode
 import Json.Decode
 import Json.Decode.Pipeline as DecodePipeline
-
-import Models.Customer exposing(Customer, decodeCustomerList, encodeCustomerList)
-
+import Models.Customer exposing (Customer, decodeCustomerList, encodeCustomerList)
 import Http
+
 
 -- elm-package install -- yes noredink/elm-decode-pipeline
 
 import Json.Decode.Pipeline
 import Utils.RandomUser as RandomUser
+import Models.Customer as MCustomer
+import Dict
 
 
 port toFirebaseDB : ( String, Maybe Value ) -> Cmd msg
 
 
 port fromFirebaseDB : (Value -> msg) -> Sub msg
-
 
 
 type FirebaseMsg
@@ -48,8 +49,13 @@ type FirebaseMsg
     | FetchRandomCustomers
 
 
+type ExternalMsg
+    = CustomersSet
+    | NoOp
+
+
 type Msg
-    = SetCustomerList (List Customer)
+    = SetCustomers MCustomer.CustomersById
     | FirebaseErrorMessage String
     | UI FirebaseMsg
     | RandomUsersMeResponse (Result Http.Error RandomUser.RandomUserMe)
@@ -58,43 +64,32 @@ type Msg
 
 type alias Model =
     { dbMsg : String
-    , all : List Customer
+    , customersById : MCustomer.CustomersById
     , importAmount : String
     }
 
-
-main : Program Never Model Msg
-main =
-    Html.program
-        { init = init
-        , view = view 
-        , update = update
-        , subscriptions = subscriptions
-        }
-
-
 initModel : Model
 initModel =
-    { all = []
+    { customersById = MCustomer.emptyCustomersById
     , dbMsg = ""
     , importAmount = "10"
     }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( initModel, Cmd.none )
+customerCount : Model -> Int
+customerCount model =
+    List.length (Dict.keys model.customersById)
 
 
 view : Model -> Html.Html Msg
 view model =
     Html.div []
-        [ Html.text <| "Customers " ++ (toString <| List.length model.all)
+        [ Html.text <| "Customers " ++ (toString <| customerCount model)
         , Html.input [ Html.Events.onInput UpdateImportAmount, Html.Attributes.value model.importAmount ] []
         , Html.button [ buttonStyle, Html.Events.onClick (UI FetchRandomCustomers) ] [ Html.text "Import Customers from RandomUser.me" ]
-        , Html.button [ buttonStyle, Html.Events.onClick (UI (DeleteCustomer  "")) ] [ Html.text "Delete All" ]
+        , Html.button [ buttonStyle, Html.Events.onClick (UI (DeleteCustomer "")) ] [ Html.text "Delete All" ]
         , viewDbMsg model
-        , viewCustomers model.all
+        , viewCustomers <| Dict.values model.customersById
         ]
 
 
@@ -125,11 +120,15 @@ cupcakeImg =
     "https://2.bp.blogspot.com/-CAtiru0_Wgk/V7PgKQQ3e1I/AAAAAAAF85Y/KI-9G5903Gg7y_Wog47Ogib3f-Gc22kWwCLcB/s1600/cupcake-778704_960_720.png"
 
 
+(=>) =
+    (,)
+
+
 
 -- https://staltz.com/unidirectional-user-interface-architectures.html
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> ( ( Model, Cmd Msg ), ExternalMsg )
 update msg model =
     case msg of
         RandomUsersMeResponse randomUserMe ->
@@ -147,44 +146,56 @@ update msg model =
                                 Debug.log "firebaseCustomerList" (firebaseCustomerList randomUser)
                         in
                             ( model, toFirebaseDB ( "Database/Import/Customers", Just <| firebaseCustomerList randomUser ) )
+                                => NoOp
 
                     Err httpError ->
                         case httpError of
                             Http.BadUrl a ->
                                 ( { model | dbMsg = a }, Cmd.none )
+                                    => NoOp
 
                             Http.Timeout ->
                                 ( { model | dbMsg = "Timeout" }, Cmd.none )
+                                    => NoOp
 
                             Http.NetworkError ->
                                 ( { model | dbMsg = "NetworkError" }, Cmd.none )
+                                    => NoOp
 
                             Http.BadStatus a ->
                                 ( { model | dbMsg = toString a }, Cmd.none )
+                                    => NoOp
 
                             Http.BadPayload a b ->
                                 ( { model | dbMsg = a ++ ":" ++ toString b }, Cmd.none )
+                                    => NoOp
 
-        SetCustomerList all ->
-            ( { model | all = all }, Cmd.none )
-
+        SetCustomers customersById ->
+            ( { model | customersById = customersById }, Cmd.none )
+                => CustomersSet
         FirebaseErrorMessage lastUpdateMessage ->
             ( { model | dbMsg = lastUpdateMessage }, Cmd.none )
+                => NoOp
 
         UpdateImportAmount str ->
             ( { model | importAmount = str }, Cmd.none )
+                => NoOp
 
         UI CustomerList ->
             ( model, toFirebaseDB ( "Database/Customer/List", Nothing ) )
+                => NoOp
 
         UI (CreateCustomer valueObject) ->
             ( model, toFirebaseDB ( "Database/Customer/Create", Just valueObject ) )
+                => NoOp
 
         UI (DeleteCustomer customerId) ->
             ( model, toFirebaseDB ( "Database/Customer/Delete", Just (Encode.string customerId) ) )
+                => NoOp
 
         UI FetchRandomCustomers ->
             ( model, importFromRandomUserMe model )
+                => NoOp
 
 
 importFromRandomUserMe : Model -> Cmd Msg
@@ -197,42 +208,43 @@ subscriptions _ =
     fromFirebaseDB decodeFirebaseDBValue
 
 
-
-
 type alias FirebaseEvent =
     { event : String
-      , value : Value
+    , value : Value
     }
+
 
 decodeFirebaseEvent : Json.Decode.Decoder FirebaseEvent
 decodeFirebaseEvent =
     Json.Decode.Pipeline.decode FirebaseEvent
         |> Json.Decode.Pipeline.required "event" (Json.Decode.string)
-        |> Json.Decode.Pipeline.required "value" (Json.Decode.value) 
+        |> Json.Decode.Pipeline.required "value" (Json.Decode.value)
 
-eventToMsg: Result String FirebaseEvent -> Msg
+
+eventToMsg : Result String FirebaseEvent -> Msg
 eventToMsg result =
     case result of
         Err string ->
             FirebaseErrorMessage ("EventMapping Error :" ++ string)
-        Ok {event, value} ->
-            case event of 
+
+        Ok { event, value } ->
+            case event of
                 "customer_list" ->
                     let
                         result =
                             Decode.decodeValue decodeCustomerList value
                     in
-                    case result of
-                        Ok thing ->
-                           SetCustomerList thing
+                        case result of
+                            Ok customerList ->
+                                SetCustomers (MCustomer.customersByIdFromList customerList)
 
-                        Err msg ->
-                           FirebaseErrorMessage ("CustomerList Value Error :" ++ toString msg)
+                            Err msg ->
+                                FirebaseErrorMessage ("CustomerList Value Error :" ++ toString msg)
+
                 _ ->
                     FirebaseErrorMessage ("Unknown event :" ++ event)
 
 
 decodeFirebaseDBValue : Value -> Msg
 decodeFirebaseDBValue v =
-   (eventToMsg (Decode.decodeValue decodeFirebaseEvent v))
-
+    (eventToMsg (Decode.decodeValue decodeFirebaseEvent v))

@@ -13,4 +13,5 @@ type Msg
     | EmptyPage Empty.Msg
     | SignInPage SignIn.Msg
     | FirebaseDBPage Firebase.DB.Msg
+    | FirebaseDBSubscription Firebase.DB.Msg
     | CustomersDetailListPage Customers.DetailList.Actions

@@ -5,60 +5,46 @@ import Html.Events exposing (onClick)
 import Html.Attributes exposing (class, style, src)
 import Http
 import Models.Customer as Customer exposing (Customer, CustomerAddress, CustomerCreditCard, encodeCustomerList)
-import Utils.RandomUser exposing (RandomUserMe, importFromRandomUserMeWithSeed, randomUserMeToCustomers)
 import Window
 import Task
 import Debug as D
 import Array
 import Views.Customer as CView
 import Json.Decode as Decode
+import Dict
 
 type alias Model =
-    { customers : List Customer
-    , errorMsg : String
+    {
+     errorMsg : String
     , currentCustomerIndex : Int
     , customersToShow : Int
     , cardWidth : Int
     , editableCustomer : Maybe Customer
+    , customersById : Customer.CustomersById
     }
 
 
 type Actions
-    = ImportCustomers (Result Http.Error RandomUserMe)
-    | Resize Window.Size
+    = Resize Window.Size
     | Next
     | Previous
     | CustomerMsg CView.Msg
     | Validation (Result Http.Error String)
-
-main : Program Never Model Actions
-main =
-    Html.program
-        { init = init
-        , view = view
-        , subscriptions = subscriptions
-        , update = update
-        }
+    --| ImportCustomers (Result Http.Error RandomUserMe)
 
 
 initModel : Model
 initModel =
-    (Model [] "" 0 3 400 Nothing)
+    (Model "" 0 3 400 Nothing Customer.emptyCustomersById)
 
 
 initCmd : Cmd Actions
 initCmd =
     Cmd.batch
-        [ importFromRandomUserMeWithSeed ImportCustomers "10" "abc123-seed"
-        , Task.perform Resize Window.size
+        [
+         --  importFromRandomUserMeWithSeed ImportCustomers "10" "abc123-seed"
+         Task.perform Resize Window.size
         ]
-
-
-init : ( Model, Cmd Actions )
-init =
-    ( initModel
-    , initCmd
-    )
 
 
 view : Model -> Html Actions
@@ -71,11 +57,11 @@ view model =
 
 
 customerList : Model -> List (Html Actions)
-customerList { customers, customersToShow, currentCustomerIndex, editableCustomer } =
+customerList { customersToShow, currentCustomerIndex, editableCustomer, customersById } =
     List.map (Html.map CustomerMsg)
         (List.map (customerToHtmlFunction editableCustomer) <|
             customerWindow
-                { customers = customers
+                { customers = Dict.values customersById
                 , customersToShow = customersToShow
                 , currentCustomerIndex = currentCustomerIndex
                 }
@@ -151,7 +137,7 @@ customerWindow { customers, customersToShow, currentCustomerIndex } =
             Array.get indexPosition (Array.fromList indexes) |> Maybe.withDefault 0
 
         lookup_customer customerPosition =
-            Maybe.withDefault Customer.emptyModel
+            Maybe.withDefault Customer.emptyCustomer
                 (Array.get
                     (lookup_customer_index customerPosition)
                     array
@@ -169,24 +155,25 @@ calcCustomersToShow : Model -> Window.Size -> Int
 calcCustomersToShow model { height, width } =
     width // model.cardWidth
 
+lengthOfCustomers: Dict.Dict String Customer -> Int
+lengthOfCustomers customersById =
+    List.length <| Dict.values customersById
 
 -- % is not safe from divzero runtime (0.18 elm)
 nextCustomerIndex : Model -> Int
-nextCustomerIndex { currentCustomerIndex, customers } =
-    (currentCustomerIndex + 1) % (List.length customers)
+nextCustomerIndex { currentCustomerIndex, customersById } =
+    (currentCustomerIndex + 1) % (lengthOfCustomers customersById)
 
 
 
 -- % is not safe from divzero runtime (0.18 elm)
 prevCustomerIndex : Model -> Int
-prevCustomerIndex { currentCustomerIndex, customers } =
-    (currentCustomerIndex - 1) % (List.length customers)
+prevCustomerIndex { currentCustomerIndex, customersById } =
+    (currentCustomerIndex - 1) % (lengthOfCustomers customersById)
 
 
 decodeServerValidate =
     Decode.at ["ok"] Decode.string
-
-
 
 postWithCred url body =
     Http.request
@@ -252,19 +239,25 @@ update msg model =
                 -- TODO delegate to Edit Customer Sub Program
                 CView.Save customer ->
                     let
+                        customersById = model.customersById
+
+
+                        replaceCustomer maybeCustomer =
+                            case maybeCustomer of
+                                Nothing ->
+                                    Nothing
+                                Just customer ->
+                                    model.editableCustomer
+
                         -- Performance Issue (Dict is better than a full list scan!)
                         --
-                        updatedCustomers = List.map (\a ->
-                                                      if a.id == customer.id then
-                                                         model.editableCustomer
-                                                         |> Maybe.withDefault a
-                                                      else
-                                                          a
-                                                    ) model.customers
+
+                        updatedCustomers = Dict.update customer.id replaceCustomer customersById
                     in
-                        ( { model | editableCustomer = Nothing,
-                            customers = updatedCustomers },
-                            checkServerSideValidation model.editableCustomer
+                        ( { model | editableCustomer = Nothing
+                          , customersById = updatedCustomers 
+                          }
+                          , (checkServerSideValidation model.editableCustomer)
                         )
                 -- TODO delegate to Edit Customer Sub Program
                 CView.Update event ->
@@ -280,6 +273,7 @@ update msg model =
 
         Resize windowSize ->
             ( { model | customersToShow = calcCustomersToShow model windowSize }, Cmd.none )
+{-
 
         ImportCustomers result ->
             case result of
@@ -306,3 +300,4 @@ update msg model =
 
                         Http.BadPayload a b ->
                             ( { model | errorMsg = a ++ ":" ++ toString b }, Cmd.none )
+-}
