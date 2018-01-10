@@ -1,11 +1,12 @@
 port module Firebase.DB
     exposing
-        ( main
-        , initModel
+        ( 
+         initModel
         , update
         , view
         , subscriptions
         , Msg(UI)
+        , ExternalMsg(..)
         , FirebaseMsg(CustomerList)
         , Model
         )
@@ -48,6 +49,11 @@ type FirebaseMsg
     | FetchRandomCustomers
 
 
+type ExternalMsg
+    = CustomersSet
+    | NoOp
+
+
 type Msg
     = SetCustomers MCustomer.CustomersById
     | FirebaseErrorMessage String
@@ -62,28 +68,12 @@ type alias Model =
     , importAmount : String
     }
 
-
-main : Program Never Model Msg
-main =
-    Html.program
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
-
-
 initModel : Model
 initModel =
     { customersById = MCustomer.emptyCustomersById
     , dbMsg = ""
     , importAmount = "10"
     }
-
-
-init : ( Model, Cmd Msg )
-init =
-    ( initModel, Cmd.none )
 
 
 customerCount : Model -> Int
@@ -130,11 +120,15 @@ cupcakeImg =
     "https://2.bp.blogspot.com/-CAtiru0_Wgk/V7PgKQQ3e1I/AAAAAAAF85Y/KI-9G5903Gg7y_Wog47Ogib3f-Gc22kWwCLcB/s1600/cupcake-778704_960_720.png"
 
 
+(=>) =
+    (,)
+
+
 
 -- https://staltz.com/unidirectional-user-interface-architectures.html
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> ( ( Model, Cmd Msg ), ExternalMsg )
 update msg model =
     case msg of
         RandomUsersMeResponse randomUserMe ->
@@ -152,44 +146,56 @@ update msg model =
                                 Debug.log "firebaseCustomerList" (firebaseCustomerList randomUser)
                         in
                             ( model, toFirebaseDB ( "Database/Import/Customers", Just <| firebaseCustomerList randomUser ) )
+                                => NoOp
 
                     Err httpError ->
                         case httpError of
                             Http.BadUrl a ->
                                 ( { model | dbMsg = a }, Cmd.none )
+                                    => NoOp
 
                             Http.Timeout ->
                                 ( { model | dbMsg = "Timeout" }, Cmd.none )
+                                    => NoOp
 
                             Http.NetworkError ->
                                 ( { model | dbMsg = "NetworkError" }, Cmd.none )
+                                    => NoOp
 
                             Http.BadStatus a ->
                                 ( { model | dbMsg = toString a }, Cmd.none )
+                                    => NoOp
 
                             Http.BadPayload a b ->
                                 ( { model | dbMsg = a ++ ":" ++ toString b }, Cmd.none )
+                                    => NoOp
 
         SetCustomers customersById ->
             ( { model | customersById = customersById }, Cmd.none )
-
+                => CustomersSet
         FirebaseErrorMessage lastUpdateMessage ->
             ( { model | dbMsg = lastUpdateMessage }, Cmd.none )
+                => NoOp
 
         UpdateImportAmount str ->
             ( { model | importAmount = str }, Cmd.none )
+                => NoOp
 
         UI CustomerList ->
             ( model, toFirebaseDB ( "Database/Customer/List", Nothing ) )
+                => NoOp
 
         UI (CreateCustomer valueObject) ->
             ( model, toFirebaseDB ( "Database/Customer/Create", Just valueObject ) )
+                => NoOp
 
         UI (DeleteCustomer customerId) ->
             ( model, toFirebaseDB ( "Database/Customer/Delete", Just (Encode.string customerId) ) )
+                => NoOp
 
         UI FetchRandomCustomers ->
             ( model, importFromRandomUserMe model )
+                => NoOp
 
 
 importFromRandomUserMe : Model -> Cmd Msg

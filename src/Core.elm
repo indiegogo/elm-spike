@@ -14,32 +14,36 @@ import Session
 import Firebase.DB
 import Customers.Grid
 import Customers.DetailList
+import Models.Customer
 import Html exposing (Html)
+
 
 type alias EmptyModel =
     {}
 
 
 type alias Model =
-    { customersModel : Customers.Grid.Model
-    , detailsModel   : Customers.DetailList.Model
+    {
+     detailsModel : Customers.DetailList.Model
     , ordersModel : EmptyModel
     , inventoryModel : EmptyModel
     , signInModel : SignIn.Model
     , dbModel : Firebase.DB.Model
     , session : Session.Session
+    , customersById : Models.Customer.CustomersById
     }
 
 
 initModel : Model
 initModel =
-    { customersModel = Customers.Grid.initModel
-    , detailsModel   = Customers.DetailList.initModel
+    {
+    detailsModel = Customers.DetailList.initModel
     , ordersModel = EmptyModel
     , inventoryModel = EmptyModel
     , signInModel = SignIn.initModel
     , dbModel = Firebase.DB.initModel
     , session = Session.init
+    , customersById = Models.Customer.emptyCustomersById
     }
 
 
@@ -55,11 +59,7 @@ init =
         c =
             D.log "function" "init"
     in
-        ( initModel
-        , Cmd.batch [
-               Cmd.map CustomersDetailListPage Customers.DetailList.initCmd
-              ]
-        )
+        ( initModel, Cmd.none )
 
 
 
@@ -83,8 +83,11 @@ update msg model =
         case msg of
             CustomersDetailListPage a ->
                 let
+                    currentDetailsModel =
+                        model.detailsModel
+
                     next =
-                        Customers.DetailList.update a model.detailsModel
+                        Customers.DetailList.update a { currentDetailsModel | customersById = model.customersById }
 
                     detailsModel =
                         Tuple.first next
@@ -92,7 +95,15 @@ update msg model =
                     cmd =
                         Cmd.map CustomersDetailListPage <| Tuple.second next
                 in
-                    ( { model | detailsModel = detailsModel }, cmd )
+                    -- operations in details model update can modify the customersById copy
+                    -- which will need to be propogated back to the core model
+                    ( { model
+                        | detailsModel = detailsModel
+                        , customersById = detailsModel.customersById
+                      }
+                    , cmd
+                    )
+
             SelectPage idx ->
                 ( { model
                     | session = Session.setPageIndex model.session idx
@@ -121,7 +132,7 @@ update msg model =
             CustomersPage msg ->
                 let
                     next =
-                        Customers.Grid.update msg model.customersModel
+                        Customers.Grid.update msg model
 
                     customersModel =
                         Tuple.first next
@@ -129,26 +140,54 @@ update msg model =
                     cmd =
                         Cmd.map CustomersPage <| Tuple.second next
                 in
-                    ( { model | customersModel = customersModel }, cmd )
+                    ( model , cmd ) 
 
             EmptyPage msg ->
                 ( model, Cmd.none )
 
+            FirebaseDBSubscription msg ->
+                updateForFirebaseDb msg model
+
             FirebaseDBPage msg ->
+                updateForFirebaseDb msg model
+
+updateForFirebaseDb: Firebase.DB.Msg -> Model -> (Model,Cmd Msg)
+updateForFirebaseDb msg model =
+    let
+        next =
+            Firebase.DB.update msg model.dbModel
+
+        dbModel =
+            Tuple.first (Tuple.first next)
+
+        componentExternalMsg =
+            Tuple.second next
+
+        cmd =
+            Cmd.map FirebaseDBPage <| Tuple.second (Tuple.first next)
+    in
+        case componentExternalMsg of
+            Firebase.DB.NoOp ->
+                ( { model
+                    | dbModel = dbModel
+                  }
+                , cmd
+                )
+
+            Firebase.DB.CustomersSet ->
                 let
-                    next =
-                        Firebase.DB.update msg model.dbModel
-
-                    dbModel =
-                        Tuple.first next
-
-                    cmd =
-                        Cmd.map FirebaseDBPage <| Tuple.second next
+                  a = Debug.log "customersset msg triggered" dbModel
+                  detailsModel = model.detailsModel
+                  customersById  = dbModel.customersById
                 in
-                    ( { model | dbModel = dbModel
-                                , detailsModel = ({model.detailsModel   | dbModel = dbModel })
-                                , detailsModel = ({model.customersModel | dbModel = dbModel })
-                      }, cmd )
+                ( { model
+                    | customersById = customersById
+
+                    , detailsModel = {detailsModel| customersById = customersById}
+                    , dbModel = dbModel
+                  }
+                , cmd
+                )
 
 
 view : Model -> Html Msg
@@ -160,8 +199,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Sub.map SignInPage (SignIn.subscriptions model.signInModel)
-        , Sub.map CustomersPage (Customers.Grid.subscriptions model.customersModel)
-        , Sub.map FirebaseDBPage (Firebase.DB.subscriptions model.dbModel)
+        , Sub.map FirebaseDBSubscription (Firebase.DB.subscriptions model.dbModel)
         , Sub.map CustomersDetailListPage (Customers.DetailList.subscriptions model.detailsModel)
         ]
 

@@ -5,14 +5,12 @@ import Html.Events exposing (onClick)
 import Html.Attributes exposing (class, style, src)
 import Http
 import Models.Customer as Customer exposing (Customer, CustomerAddress, CustomerCreditCard, encodeCustomerList)
-import Utils.RandomUser exposing (RandomUserMe, importFromRandomUserMeWithSeed, randomUserMeToCustomers)
 import Window
 import Task
 import Debug as D
 import Array
 import Views.Customer as CView
 import Json.Decode as Decode
-import Firebase.DB
 import Dict
 
 type alias Model =
@@ -22,22 +20,22 @@ type alias Model =
     , customersToShow : Int
     , cardWidth : Int
     , editableCustomer : Maybe Customer
-    , dbModel : Firebase.DB.Model
+    , customersById : Customer.CustomersById
     }
 
 
 type Actions
-    = ImportCustomers (Result Http.Error RandomUserMe)
-    | Resize Window.Size
+    = Resize Window.Size
     | Next
     | Previous
     | CustomerMsg CView.Msg
     | Validation (Result Http.Error String)
+    --| ImportCustomers (Result Http.Error RandomUserMe)
 
 
 initModel : Model
 initModel =
-    (Model "" 0 3 400 Nothing Firebase.DB.initModel)
+    (Model "" 0 3 400 Nothing Customer.emptyCustomersById)
 
 
 initCmd : Cmd Actions
@@ -59,11 +57,11 @@ view model =
 
 
 customerList : Model -> List (Html Actions)
-customerList { customersToShow, currentCustomerIndex, editableCustomer, dbModel } =
+customerList { customersToShow, currentCustomerIndex, editableCustomer, customersById } =
     List.map (Html.map CustomerMsg)
         (List.map (customerToHtmlFunction editableCustomer) <|
             customerWindow
-                { customers = Dict.values dbModel.customersById
+                { customers = Dict.values customersById
                 , customersToShow = customersToShow
                 , currentCustomerIndex = currentCustomerIndex
                 }
@@ -157,26 +155,25 @@ calcCustomersToShow : Model -> Window.Size -> Int
 calcCustomersToShow model { height, width } =
     width // model.cardWidth
 
-lengthOfCustomers {customersById} =
+lengthOfCustomers: Dict.Dict String Customer -> Int
+lengthOfCustomers customersById =
     List.length <| Dict.values customersById
 
 -- % is not safe from divzero runtime (0.18 elm)
 nextCustomerIndex : Model -> Int
-nextCustomerIndex { currentCustomerIndex, dbModel } =
-    (currentCustomerIndex + 1) % (lengthOfCustomers dbModel)
+nextCustomerIndex { currentCustomerIndex, customersById } =
+    (currentCustomerIndex + 1) % (lengthOfCustomers customersById)
 
 
 
 -- % is not safe from divzero runtime (0.18 elm)
 prevCustomerIndex : Model -> Int
-prevCustomerIndex { currentCustomerIndex, dbModel } =
-    (currentCustomerIndex - 1) % (lengthOfCustomers dbModel)
+prevCustomerIndex { currentCustomerIndex, customersById } =
+    (currentCustomerIndex - 1) % (lengthOfCustomers customersById)
 
 
 decodeServerValidate =
     Decode.at ["ok"] Decode.string
-
-
 
 postWithCred url body =
     Http.request
@@ -242,22 +239,23 @@ update msg model =
                 -- TODO delegate to Edit Customer Sub Program
                 CView.Save customer ->
                     let
-                        dbModel = model.dbModel
-                        customersById = dbModel.customersById
+                        customersById = model.customersById
+
+
+                        replaceCustomer maybeCustomer =
+                            case maybeCustomer of
+                                Nothing ->
+                                    Nothing
+                                Just customer ->
+                                    model.editableCustomer
 
                         -- Performance Issue (Dict is better than a full list scan!)
                         --
-                        updatedCustomers = List.map (\a ->
-                                                      if a.id == customer.id then
-                                                         model.editableCustomer
-                                                         |> Maybe.withDefault a
-                                                      else
-                                                          a
-                                                    ) model.dbModel.cust
 
+                        updatedCustomers = Dict.update customer.id replaceCustomer customersById
                     in
                         ( { model | editableCustomer = Nothing
-                          ,dbModel = ( { dbModel | customersById = updatedCustomers } )
+                          , customersById = updatedCustomers 
                           }
                           , (checkServerSideValidation model.editableCustomer)
                         )
@@ -275,6 +273,7 @@ update msg model =
 
         Resize windowSize ->
             ( { model | customersToShow = calcCustomersToShow model windowSize }, Cmd.none )
+{-
 
         ImportCustomers result ->
             case result of
@@ -301,3 +300,4 @@ update msg model =
 
                         Http.BadPayload a b ->
                             ( { model | errorMsg = a ++ ":" ++ toString b }, Cmd.none )
+-}
