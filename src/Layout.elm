@@ -11,10 +11,9 @@ import Html.Styled as St
 import Empty as EmptyView
 import Customers.Grid as CustomersView
 import Customers.DetailList as CustomersDetailView
-
 import SignIn as SignInView exposing (Msg(FireAuth))
 import Msg exposing (Msg(..))
-
+import Routing exposing (Route(..))
 
 
 -- i think importing SignIn's Child Module in Layout is a bad smell for isolation / encapsulation
@@ -160,7 +159,7 @@ e404 _ =
 view model =
     let
         currentView =
-            (Array.get (.pageIndex (.session model)) tabViews |> Maybe.withDefault e404) model
+            page model
     in
         div [ containerStyle ]
             [ (sHeader (tabLinks model.session.account) model.session.account)
@@ -168,32 +167,40 @@ view model =
             ]
 
 
+page model =
+    case model.session.route of
+        SignInRoute ->
+            (.signInModel >> SignInView.view >> Html.map SignInPage) model
+
+        CustomersRoute ->
+            (CustomersView.view model)
+
+        CustomerDetailRoute id ->
+            (.detailsModel >> CustomersDetailView.view >> Html.map CustomersDetailListPage) model
+
+        DBTestRoute ->
+            (.dbModel >> FirebaseDB.view >> Html.map FirebaseDBPage) model
+
+        OrdersRoute ->
+            (.ordersModel >> EmptyView.view >> Html.map EmptyPage) model
+
+        InventoryRoute ->
+            (.inventoryModel >> EmptyView.view >> Html.map EmptyPage) model
+
+        NotFoundRoute ->
+            e404 model
+
+
 tabSet =
-    [ ( 0, "SignIn", "signIn", .signInModel >> SignInView.view >> Html.map SignInPage )
-    , ( 1, "Customers", "cust", CustomersView.view >> Html.map CustomersPage ) -- uses Core.Model as its State
-    , ( 1, "Detail List", "details", .detailsModel >> CustomersDetailView.view >> Html.map CustomersDetailListPage )
-    , ( 1, "Orders", "ord", .ordersModel >> EmptyView.view >> Html.map EmptyPage )
-    , ( 1, "Inventory", "inv", .inventoryModel >> EmptyView.view >> Html.map EmptyPage )
-    , ( 1, "DB Test", "db", .dbModel >> FirebaseDB.view >> Html.map FirebaseDBPage )
+    [ ( 0, "SignIn", SignInRoute) 
+    , ( 1, "Customers", CustomersRoute)
+    , ( 1, "Inventory", InventoryRoute)
+    , ( 1, "DB Test", DBTestRoute)
     ]
 
 
-tabViews =
-  (Array.fromList
-    (List.map (\( _, _, _, v ) -> v) tabSet)
-   )
-
-
 tabNames =
-    ( tabSet |> List.map (\( _, x, _, _ ) -> text x), [] )
-
-
-urlTabs =
-    List.indexedMap (\idx ( _, _, u, _ ) -> ( u, idx )) tabSet |> Dict.fromList
-
-
-tabUrls =
-    List.map (\( _, _, u, _ ) -> u) tabSet |> Array.fromList
+    ( tabSet |> List.map (\( _, x, _) -> text x), [] )
 
 
 tabLinks model =
@@ -201,14 +208,12 @@ tabLinks model =
         Nothing ->
             []
 
-        Just a ->
+        Just account ->
             (List.map
-                (\( _, name, href_, _ ) ->
-                    Html.a [ href ("#" ++ href_) ] [ text name ]
+                (\( _, name, msg) ->
+                    Html.a [ onClick (ChangeRoute msg) ] [ text name ]
                 )
-                (List.filter (\( i, _, _, _ ) -> i == 1) tabSet)
+                (List.filter (\( i, _, _ ) -> i == 1) tabSet)
             )
 
 
-urlOf model =
-    "#" ++ (Array.get model.session.pageIndex tabUrls |> Maybe.withDefault "")

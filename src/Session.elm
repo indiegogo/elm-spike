@@ -4,12 +4,12 @@ module Session
         , Account
         , Session
         , init
-        , setPageIndex
+        , setRoute
         , fromFirebaseAuth
         )
 
 import Firebase.Auth exposing (AuthStatus)
-
+import Routing exposing(Route, Route(..))
 
 type SessionStatus
     = InValid
@@ -24,6 +24,7 @@ type alias Account =
 
 type alias Session =
     { pageIndex : Int
+    , route   : Route
     , account : Maybe Account
     , status : SessionStatus
     }
@@ -31,24 +32,24 @@ type alias Session =
 
 init : Session
 init =
-    Session 0 Nothing InValid
+    Session 0 SignInRoute Nothing InValid
 
 
-setPageIndex session index =
+setRoute session route =
     case session.status of
         Valid ->
             case session.account of
                 Just a ->
-                    { session | pageIndex = index }
+                    { session | route = route }
 
                 Nothing ->
-                    { session | pageIndex = 0 }
+                    { session | route = SignInRoute }
 
         InValid ->
-            { session | pageIndex = 0 }
+            { session | route = SignInRoute }
 
         Verifying ->
-            { session | pageIndex = 0 }
+            { session | route = SignInRoute }
 
 
 fromFirebaseAuth firebaseAuthModel =
@@ -68,7 +69,7 @@ fromFirebaseAuth firebaseAuthModel =
                         Nothing ->
                             (Nothing, InValid)
             in
-                setPageIndex { init
+                setRoute { init
                                  | status = status
                                  , account = account
-                } 1
+                } CustomersRoute

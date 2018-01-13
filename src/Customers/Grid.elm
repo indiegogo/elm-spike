@@ -1,18 +1,17 @@
-module Customers.Grid exposing ( Msg, view, update, subscriptions)
+module Customers.Grid exposing (view)
 
 import Html exposing (Html, text, div)
 import Html.Attributes exposing (style)
 import Material.Card as Card
-import Material.Options as Options exposing (cs, css)
+import Material.Options as Options exposing (cs, css, onClick)
 import Material.Color as Color
 import Material.Typography as Typography
 import Firebase.DB
 import Debug as D exposing (log)
 import Models.Customer exposing(Customer)
 import Dict
-
-
-type Msg = Msg
+import Msg exposing(Msg(ChangeRoute))
+import Routing exposing(Route(CustomerDetailRoute))
 
 
 white : Options.Property c m
@@ -33,6 +32,7 @@ anMdlCard customer =
         , css "padding" "5px"
         , css "background" ("url('" ++ customer.pictureUrl ++ "') center / cover")
         , margin1
+        , onClick (ChangeRoute (CustomerDetailRoute customer.id))
         ]
         [ Card.text [ Card.expand ] []
           -- Filler
@@ -61,19 +61,3 @@ view model =
     div [ contentStyle ]
         (List.map (\customer -> anMdlCard customer) (model.customersById |> Dict.values))
 
-
-update msg model =
-    let
-        a =
-            D.log "model" model
-
-        b =
-            D.log "msg" msg
-
-        c =
-            D.log "Customers.update" "Customers.update"
-    in
-        (model, Cmd.none)
-
-subscriptions m =
-    Sub.none

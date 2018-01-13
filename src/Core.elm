@@ -1,12 +1,17 @@
-module Core exposing (Model, update, view, init, subscriptions, location2messages, delta2url)
+module Core
+    exposing
+        ( Model
+        , update
+        , view
+        , init
+        , subscriptions
+        , initModelWithRoute
+        )
 
 {-|
 -}
 
 import Debug as D
-import RouteUrl as Routing
-import Navigation
-import Dict
 import Msg exposing (Msg(..))
 import Layout
 import SignIn
@@ -16,15 +21,15 @@ import Customers.Grid
 import Customers.DetailList
 import Models.Customer
 import Html exposing (Html)
-
+import Routing exposing (Route, Route(..))
+import Navigation
 
 type alias EmptyModel =
     {}
 
 
 type alias Model =
-    {
-     detailsModel : Customers.DetailList.Model
+    { detailsModel : Customers.DetailList.Model
     , ordersModel : EmptyModel
     , inventoryModel : EmptyModel
     , signInModel : SignIn.Model
@@ -34,10 +39,22 @@ type alias Model =
     }
 
 
+initModelWithRoute route =
+    let
+        session =
+            initModel.session
+    in
+        { initModel
+            | session =
+                { session
+                    | route = route
+                }
+        }
+
+
 initModel : Model
 initModel =
-    {
-    detailsModel = Customers.DetailList.initModel
+    { detailsModel = Customers.DetailList.initModel
     , ordersModel = EmptyModel
     , inventoryModel = EmptyModel
     , signInModel = SignIn.initModel
@@ -81,6 +98,23 @@ update msg model =
             D.log "update" "update"
     in
         case msg of
+            ChangeRoute route ->
+                    ( { model
+                        | session = Session.setRoute model.session route
+                      }
+                    , Navigation.newUrl  ("/" ++ Routing.urlFor route)
+                    )
+            OnLocationChange location ->
+                let
+                    newRoute =
+                        Routing.parseLocation location
+                in
+                    ( { model
+                        | session = Session.setRoute model.session newRoute
+                      }
+                     , Cmd.none
+                    )
+
             CustomersDetailListPage a ->
                 let
                     currentDetailsModel =
@@ -104,13 +138,6 @@ update msg model =
                     , cmd
                     )
 
-            SelectPage idx ->
-                ( { model
-                    | session = Session.setPageIndex model.session idx
-                  }
-                , Cmd.none
-                )
-
             SignInPage msg ->
                 let
                     ( ( signInModel, cmd ), externalMsg ) =
@@ -129,19 +156,6 @@ update msg model =
                 in
                     ( newModel, Cmd.map SignInPage cmd )
 
-            CustomersPage msg ->
-                let
-                    next =
-                        Customers.Grid.update msg model
-
-                    customersModel =
-                        Tuple.first next
-
-                    cmd =
-                        Cmd.map CustomersPage <| Tuple.second next
-                in
-                    ( model , cmd ) 
-
             EmptyPage msg ->
                 ( model, Cmd.none )
 
@@ -151,7 +165,8 @@ update msg model =
             FirebaseDBPage msg ->
                 updateForFirebaseDb msg model
 
-updateForFirebaseDb: Firebase.DB.Msg -> Model -> (Model,Cmd Msg)
+
+updateForFirebaseDb : Firebase.DB.Msg -> Model -> ( Model, Cmd Msg )
 updateForFirebaseDb msg model =
     let
         next =
@@ -176,18 +191,22 @@ updateForFirebaseDb msg model =
 
             Firebase.DB.CustomersSet ->
                 let
-                  a = Debug.log "customersset msg triggered" dbModel
-                  detailsModel = model.detailsModel
-                  customersById  = dbModel.customersById
-                in
-                ( { model
-                    | customersById = customersById
+                    a =
+                        Debug.log "customersset msg triggered" dbModel
 
-                    , detailsModel = {detailsModel| customersById = customersById}
-                    , dbModel = dbModel
-                  }
-                , cmd
-                )
+                    detailsModel =
+                        model.detailsModel
+
+                    customersById =
+                        dbModel.customersById
+                in
+                    ( { model
+                        | customersById = customersById
+                        , detailsModel = { detailsModel | customersById = customersById }
+                        , dbModel = dbModel
+                      }
+                    , cmd
+                    )
 
 
 view : Model -> Html Msg
@@ -201,32 +220,4 @@ subscriptions model =
         [ Sub.map SignInPage (SignIn.subscriptions model.signInModel)
         , Sub.map FirebaseDBSubscription (Firebase.DB.subscriptions model.dbModel)
         , Sub.map CustomersDetailListPage (Customers.DetailList.subscriptions model.detailsModel)
-        ]
-
-
-delta2url : Model -> Model -> Maybe Routing.UrlChange
-delta2url model1 model2 =
-    if model1.session.pageIndex /= model2.session.pageIndex then
-        { entry = Routing.NewEntry
-        , url = Layout.urlOf model2
-        }
-            |> Just
-    else
-        Nothing
-
-
-location2messages : Navigation.Location -> List Msg
-location2messages location =
-    let
-        a =
-            D.log "location2messages -> location" location
-    in
-        [ case String.dropLeft 1 location.hash of
-            "" ->
-                SelectPage 0
-
-            x ->
-                Dict.get x Layout.urlTabs
-                    |> Maybe.withDefault -1
-                    |> SelectPage
         ]
